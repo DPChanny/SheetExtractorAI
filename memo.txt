@@ -1,0 +1,47 @@
+librosa.stft()
+
+	결과값: (1 + n_fft // 2, n_frames)
+
+	n_frames 의 값은 win_length 와 hop_length 로 정함
+
+	이 스펙트럼으로 음계 분석
+
+abs():
+	abs 함수를 사횽해 복소수 벡터의 스칼라 값(magnitude, scalar) 행렬로 변환
+
+librosa.amplitude_to_db()
+	magnitude 값을 이해하기 쉽게 dB로 변환
+	이를 소리 분석쪽에서 log spectrum 이라고 함
+
+librosa.feature.melspectrogram()
+	magnitude 값을 인간의 유효 가청 범위 내로 변환
+	이를 소리 분석쪽에서 mel spectrum 이라고 함
+	변환 과정에서 일부 데이터가 손실 압축되어 인공지능 사용시 리소리가 줄어드는 장점이 있음
+	이 스펙트럼으로 마디 분석
+
+sampling rate: 초당 샘플수
+frequency: 주파수
+
+waveform: 파형
+	amplitude(pressure): 파형의 진폭, 음압
+	power(intensity): 음의 세기, 음압의 제곱
+
+	amplitude > 0: 압축(compression)
+	amplitude < 0: 팽창(rarefaction)
+	amplitude = 0: 대기압(atmospheric pressure)
+
+decibel(sound pressure level(SPL)): 
+	SPL = 10 * log( i1 / i0 ) = 10 * log((p1 / p0)**2) = 20 * log(p1/ p0)
+
+tone color 기음 기본 주파수
+timbre 배음 고조 주파수 기본 주파수의 정수배 주파
+
+phase 위상 
+
+nyquist theorem
+n hz 의 주파수 측정시 2n hz 의 sampling rate 필요
+
+mel: 인간의 유효 가청 범위를 고려한 스케일링
+librosa.feature.melspectrogram(magnitudes)
+
+
