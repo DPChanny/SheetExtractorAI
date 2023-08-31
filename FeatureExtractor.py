@@ -31,10 +31,11 @@ class FeatureExtractor:
         save_plot(self.sample.sample_name, self.sample.sample_name + "_wave_clipped_peaks")
 
     def extract_stft_feature(self):
-        win_length = int(self.sample.sampling_rate * 0.05)
+        win_length = int(self.sample.sampling_rate * 0.1)
         hop_length = win_length // 5
         n_fft = 4096
 
+        print("STFT: " + self.sample.sample_name)
         amplitudes_stft = librosa.stft(self.sample.amplitudes,
                                        win_length=win_length,
                                        hop_length=hop_length,
@@ -43,6 +44,7 @@ class FeatureExtractor:
         magnitudes = abs(amplitudes_stft)
         magnitudes_db = librosa.amplitude_to_db(magnitudes, ref=np.max)
 
+        print("MEL: " + self.sample.sample_name)
         magnitudes_mel = librosa.feature.melspectrogram(S=magnitudes,
                                                         sr=self.sample.sampling_rate,
                                                         win_length=win_length,
@@ -65,16 +67,26 @@ class FeatureExtractor:
                                      y_axis=y_axis,
                                      x_axis='time')
             plt.colorbar(format='%2.0f dB')
-            plt.title(spectrum.shape)
-            spectrum_y_sum = y_sum(spectrum)
-            plt.plot(np.linspace(start=0,
-                                 stop=self.sample.sample_time,
-                                 num=len(spectrum_y_sum)),
-                     spectrum_y_sum, linewidth=0.1)
             save_plot(self.sample.sample_name, spectrum_name)
 
         # save_spectrum(magnitudes_db, 'linear', self.sample.sample_name + "_stft_log_linear")
+
+        magnitudes_db_y_sum = y_sum(magnitudes_db)
+        plt.subplot(2, 1, 1)
+        plt.plot(np.linspace(start=0,
+                             stop=self.sample.sample_time,
+                             num=len(magnitudes_db_y_sum)),
+                 magnitudes_db_y_sum, linewidth=0.1)
+        plt.subplot(2, 1, 2)
         save_spectrum(magnitudes_db, 'log', self.sample.sample_name + "_stft_log_log")
 
         # save_spectrum(magnitudes_mel_db, 'linear', self.sample.sample_name + "_stft_mel_linear")
+
+        magnitudes_mel_db_y_sum = y_sum(magnitudes_mel_db)
+        plt.subplot(2, 1, 1)
+        plt.plot(np.linspace(start=0,
+                             stop=self.sample.sample_time,
+                             num=len(magnitudes_mel_db_y_sum)),
+                 magnitudes_mel_db_y_sum, linewidth=0.1)
+        plt.subplot(2, 1, 2)
         save_spectrum(magnitudes_mel_db, 'mel', self.sample.sample_name + "_stft_mel_mel")
