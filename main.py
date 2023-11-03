@@ -1,9 +1,9 @@
 from FeatureExtractor import FeatureExtractor
 from Sample import Sample
 
-sample_names = ["piano_60", "piano_120"]
+samples = [("piano_60", 60), ("piano_120", 120)]
 
-for sample_name in sample_names:
-    feature_extractor = FeatureExtractor(Sample(sample_name))
-    feature_extractor.extract_wave_features()
-    print(feature_extractor.extract_stft_features())
+for sample in samples:
+    feature_extractor = FeatureExtractor(Sample(sample[0], sample[1]))
+    stft_features = feature_extractor.extract_stft_features(
+        feature_extractor.sample.sampling_rate // feature_extractor.sample.bps)
