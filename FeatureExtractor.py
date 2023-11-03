@@ -46,13 +46,13 @@ class FeatureExtractor:
         save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_wave_clipped_peaks",
                   self.sample.sample_name + "_wave_clipped_peaks " + str((start, end)))
 
-    # 샘플 파형 전체를 division 만큼 묶어서 분석
-    def extract_wave_features(self, division: int = sys.maxsize):
-        division = min(division, len(self.sample.amplitudes))
-        for i in range(0, math.trunc(len(self.sample.amplitudes) / division)):
+    # 샘플 파형 전체를 division_range 만큼 묶어서 분석
+    def extract_wave_features(self, division_range: int = sys.maxsize):
+        division_range = min(division_range, len(self.sample.amplitudes))
+        for i in range(0, math.trunc(len(self.sample.amplitudes) / division_range)):
             self.extract_wave_feature(
-                i * division,
-                min(i * division + division, len(self.sample.amplitudes)))
+                i * division_range,
+                min(i * division_range + division_range, len(self.sample.amplitudes)))
 
     # 샘플 주파수를 start 부터 end 까지 분석
     # 샘플 주파수의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
@@ -102,14 +102,14 @@ class FeatureExtractor:
 
         return magnitudes_db, magnitudes_mel_db, magnitudes_sum
 
-    # 샘플 주파수 전체를 division 만큼 묶어서 분석
+    # 샘플 주파수 전체를 division_range 만큼 묶어서 분석
     # 각 샘플 주파수 묶음의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
-    def extract_stft_features(self, division=sys.maxsize) -> list[tuple[ndarray, ndarray, list[int]]]:
+    def extract_stft_features(self, division_range: int = sys.maxsize) -> list[tuple[ndarray, ndarray, list[int]]]:
         stft_features = []
-        division = min(division, len(self.sample.amplitudes))
-        for i in range(0, math.trunc(len(self.sample.amplitudes) / division)):
+        division_range = min(division_range, len(self.sample.amplitudes))
+        for i in range(0, math.trunc(len(self.sample.amplitudes) / division_range)):
             stft_features.append(self.extract_stft_feature(
-                i * division,
-                min(i * division + division, len(self.sample.amplitudes))))
+                i * division_range,
+                min(i * division_range + division_range, len(self.sample.amplitudes))))
         return stft_features
     

@@ -1,9 +1,9 @@
 import os
 import matplotlib.pyplot as plt
+from pylab import rcParams
 
 
 def save_plot(directory_name, plot_name):
-    from pylab import rcParams
     rcParams['axes.xmargin'] = 0
     rcParams['axes.ymargin'] = 0
 
