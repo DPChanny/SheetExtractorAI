@@ -34,7 +34,7 @@ class FeatureExtractor:
         plt.colorbar(format='%2.0f dB')
         save_plot(directory_name, spectrum_name)
 
-    def extract_wave_feature_range(self, start, end, beat_division=16):
+    def extract_wave_feature(self, start, end, beat_division=16):
         amplitudes = self.sample.amplitudes[start:end]
 
         amplitudes_peaks, _ = find_peaks(np.clip(amplitudes, 0, np.inf))
@@ -81,14 +81,21 @@ class FeatureExtractor:
         save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_wave_clipped_peaks",
                   self.sample.sample_name + "_wave_clipped_peaks " + str((start, end)))
 
-    def extract_wave_feature(self, amplitude_range=sys.maxsize):
+        return maxes, averages
+
+    def extract_wave_features(self, amplitude_range=sys.maxsize):
+        maxes = []
+        averages = []
         amplitude_range = min(amplitude_range, len(self.sample.amplitudes))
         for i in range(0, math.trunc(len(self.sample.amplitudes) / amplitude_range)):
-            self.extract_wave_feature_range(
-                i * amplitude_range,
-                min(i * amplitude_range + amplitude_range, len(self.sample.amplitudes)))
+            wave_feature = self.extract_wave_feature(
+                                i * amplitude_range,
+                                min(i * amplitude_range + amplitude_range, len(self.sample.amplitudes)))
+            maxes.append(wave_feature[0])
+            averages.append(wave_feature[1])
+        return maxes, averages
 
-    def extract_stft_feature_range(self, start=0, end=sys.maxsize):
+    def extract_stft_feature(self, start=0, end=sys.maxsize):
         amplitudes = self.sample.amplitudes[start:end]
 
         print("STFT:", self.sample.sample_name, str((start, end)))
@@ -138,9 +145,15 @@ class FeatureExtractor:
 
         return magnitudes_mel_db, magnitudes_mel_db_y_sum
 
-    def extract_stft_feature(self, amplitude_range=sys.maxsize):
+    def extract_stft_features(self, amplitude_range=sys.maxsize):
+        magnitudes_mel_dbs = []
+        magnitudes_mel_db_y_sums = []
         amplitude_range = min(amplitude_range, len(self.sample.amplitudes))
         for i in range(0, math.trunc(len(self.sample.amplitudes) / amplitude_range)):
-            self.extract_stft_feature_range(
-                i * amplitude_range,
-                min(i * amplitude_range + amplitude_range, len(self.sample.amplitudes)))
+            stft_feature_range = self.extract_stft_feature(
+                            i * amplitude_range,
+                            min(i * amplitude_range + amplitude_range, len(self.sample.amplitudes)))
+            magnitudes_mel_dbs.append(stft_feature_range[0])
+            magnitudes_mel_db_y_sums.append(stft_feature_range[1])
+        return magnitudes_mel_dbs, magnitudes_mel_db_y_sums
+    
