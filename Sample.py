@@ -1,7 +1,5 @@
 import librosa.feature
 
-RESAMPLE_SAMPLING_RATE = 22050
-
 
 class Sample:
     def __init__(self, sample_name: str, sample_beat_per_minute: int):
