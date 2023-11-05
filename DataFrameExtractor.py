@@ -72,7 +72,8 @@ class DataFrameExtractor:
         for i in range(len(self.stft_feature.magnitudes_sum)):
             plt.scatter(i,
                         self.stft_feature.magnitudes_sum[i],
-                        s=0.5, c=BC[beat_answer[i]])
+                        s=0.1, c=BC[beat_answer[i]])
+        plt.xticks(range(0, len(self.stft_feature.magnitudes_sum), 5), size=1)
 
         save_plot(directory_name, plot_name + "_index", "INDEX")
 
