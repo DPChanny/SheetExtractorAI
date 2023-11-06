@@ -1,10 +1,9 @@
 import sys
 import librosa.feature
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy import ndarray
+from numpy import ndarray, array, linspace, clip
 from scipy.signal import find_peaks
-import Sample
+from Sample import Sample
 from Statics import save_plot
 
 
@@ -43,7 +42,7 @@ class FeatureExtractor:
         end = min(end, len(self.sample.amplitudes))
         amplitudes = self.sample.amplitudes[start:end]
 
-        amplitudes_peaks, _ = find_peaks(np.clip(amplitudes, 0, np.inf))
+        amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, sys.float_info.max))
 
         if plot:
             plt.plot(amplitudes, linewidth=0.05)
@@ -78,7 +77,7 @@ class FeatureExtractor:
                                        n_fft=self.n_fft)
 
         magnitudes = abs(amplitudes_stft)
-        magnitudes_db = librosa.amplitude_to_db(magnitudes, ref=np.max)
+        magnitudes_db = librosa.amplitude_to_db(magnitudes)
         print("RESULT:", str(magnitudes.shape))
 
         print("MEL:", self.sample.sample_name, str((start, end)))
@@ -87,7 +86,7 @@ class FeatureExtractor:
                                                         win_length=self.win_length,
                                                         hop_length=self.hop_length,
                                                         n_fft=self.n_fft)
-        magnitudes_mel_db = librosa.amplitude_to_db(magnitudes_mel, ref=np.max)
+        magnitudes_mel_db = librosa.amplitude_to_db(magnitudes_mel)
         print("RESULT: " + str(magnitudes_mel_db.shape))
 
         if plot:
@@ -106,16 +105,16 @@ class FeatureExtractor:
             magnitudes_sum.append(sum(magnitudes[:, i]))
 
         if plot:
-            plt.plot(np.linspace(start=0,
-                                 stop=self.sample.sample_time * len(amplitudes) / len(self.sample.amplitudes),
-                                 num=len(magnitudes_sum)),
+            plt.plot(linspace(start=0,
+                              stop=self.sample.sample_time * len(amplitudes) / len(self.sample.amplitudes),
+                              num=len(magnitudes_sum)),
                      magnitudes_sum, linewidth=0.5)
             save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_stft_sum",
                       self.sample.sample_name + "_stft_sum " + str((start, end)), str(len(magnitudes_sum)))
 
         return STFTFeature(magnitudes_db,
                            magnitudes_mel_db,
-                           np.array(magnitudes_sum),
+                           array(magnitudes_sum),
                            self.sample.sample_time * len(amplitudes) / len(self.sample.amplitudes))
 
     # 샘플 주파수 전체를 division_range 만큼 묶어서 분석

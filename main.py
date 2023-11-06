@@ -1,7 +1,7 @@
-from DataFrameExtractor import BeatState, DataFrameExtractor
+from pandas import read_csv
+from DataFrameExtractor import DataFrameExtractor
 from FeatureExtractor import FeatureExtractor
 from Sample import Sample
-from pandas import DataFrame
 from Statics import save_data_frame
 
 samples = [Sample("marimba_60_1by4", 60),
@@ -16,7 +16,7 @@ samples = [Sample("marimba_60_1by4", 60),
 for sample in samples:
     feature_extractor = FeatureExtractor(sample)
 
-    data_frame_extractor = DataFrameExtractor(feature_extractor.extract_stft_feature())
+    data_frame_extractor = DataFrameExtractor(feature_extractor.extract_stft_feature(plot=True))
 
     beat_data_frame = data_frame_extractor.extract_beat_data_frame()
     save_data_frame(feature_extractor.sample.sample_name,
@@ -24,10 +24,7 @@ for sample in samples:
                     beat_data_frame)
 
     data_frame_extractor.save_beat_answer_data_frame_plot(
-        DataFrame({
-            "start": [0, 20, 40],
-            "end": [20, 40, 60],
-            "answer": [BeatState.START, BeatState.MIDDLE, BeatState.END]}),
+        read_csv(sample.sample_name + "_beat_answer_data_frame.csv"),
         sample.sample_name,
         sample.sample_name + "_beat_answer_data_frame",
         sample.sample_name + "_beat_answer_data_frame")

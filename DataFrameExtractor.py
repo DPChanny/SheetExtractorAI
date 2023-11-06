@@ -1,6 +1,5 @@
 import math
 from enum import Enum
-
 from Statics import save_plot
 import numpy as np
 from pandas import DataFrame
