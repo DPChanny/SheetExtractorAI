@@ -1,0 +1,17 @@
+start,end,answer
+0,10,beat_start
+11,75,beat_middle
+128,137,beat_start
+138,200,beat_middle
+256,264,beat_start
+265,330,beat_middle
+384,392,beat_start
+393,457,beat_middle
+512,520,beat_start
+521,580,beat_middle
+641,645,beat_start
+646,710,beat_middle
+769,773,beat_start
+774,840,beat_middle
+897,901,beat_start
+902,970,beat_middle

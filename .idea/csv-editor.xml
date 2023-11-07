@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\marimba_60\marimba_60_beat_answer_data_frame.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\marimba_60_1by4\marimba_60_1by4_beat_answer_data_frame.csv">
           <value>
             <Attribute>

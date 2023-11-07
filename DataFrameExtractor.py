@@ -13,17 +13,13 @@ A = "answer"
 
 START = "beat_start"
 MIDDLE = "beat_middle"
-END = "beat_end"
-TRANSITION = "beat_transition"
 NONE = "beat_none"
 
 
 BC = {
-    START: "#00FF00",
-    MIDDLE: "#0404B4",
-    END: "#DF0101",
-    TRANSITION: "#00FFFF",
-    NONE: "white"
+    START: "green",
+    MIDDLE: "blue",
+    NONE: "red"
 }
 
 
@@ -36,10 +32,7 @@ class DataFrameExtractor:
 
         for index in beat_answer_data_frame.index:
             for i in range(beat_answer_data_frame[S][index], beat_answer_data_frame[E][index] + 1):
-                if beat_answer[i] != NONE:
-                    beat_answer[i] = TRANSITION
-                else:
-                    beat_answer[i] = beat_answer_data_frame[A][index]
+                beat_answer[i] = beat_answer_data_frame[A][index]
 
         return beat_answer
 
@@ -56,7 +49,7 @@ class DataFrameExtractor:
         for i in range(len(self.stft_feature.magnitudes_sum)):
             plt.scatter(self.stft_feature.duration * i / len(beat_answer),
                         self.stft_feature.magnitudes_sum[i],
-                        s=0.5, c=BC[beat_answer[i]])
+                        s=0.25, c=BC[beat_answer[i]])
 
         save_plot(directory_name, plot_name + "_time", "TIME")
 
@@ -66,7 +59,7 @@ class DataFrameExtractor:
         for i in range(len(self.stft_feature.magnitudes_sum)):
             plt.scatter(i,
                         self.stft_feature.magnitudes_sum[i],
-                        s=0.5, edgecolors="none", c=BC[beat_answer[i]])
+                        s=0.25, edgecolors="none", c=BC[beat_answer[i]])
         plt.xticks(range(0, len(self.stft_feature.magnitudes_sum), 5), size=1)
 
         save_plot(directory_name, plot_name + "_index", "INDEX")
