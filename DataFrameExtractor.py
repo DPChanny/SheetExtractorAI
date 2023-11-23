@@ -6,9 +6,11 @@ import matplotlib.pyplot as plt
 
 S = "start"
 E = "end"
-LD = "left_difference_"
-RD = "right_difference_"
+L = "left"
+D = "difference_"
+R = "right_"
 A = "answer"
+V = "value"
 
 
 START = "beat_start"
@@ -65,7 +67,7 @@ class DataFrameExtractor:
         save_plot(directory_name, plot_name + "_index", "INDEX")
 
     def extract_beat_data_frame(self,
-                                difference_count: int = 3) -> DataFrame:
+                                wing_length: int = 3) -> DataFrame:
 
         beat_data_frame = {}
 
@@ -78,18 +80,20 @@ class DataFrameExtractor:
 
         beat_feature = self.stft_feature.magnitudes_sum / max(self.stft_feature.magnitudes_sum)
 
-        for ld in range(difference_count):
-            beat_data_frame[LD + str(ld)] = []
-        for rd in range(difference_count):
-            beat_data_frame[RD + str(rd)] = []
+        for left in range(wing_length):
+            beat_data_frame[L + D + str(left)] = []
+        beat_data_frame[V] = []
+        for right in range(wing_length):
+            beat_data_frame[R + D + str(right)] = []
 
         for i in range(len(beat_feature)):
-            for rd in range(difference_count):
-                beat_data_frame[RD + str(rd)].append(
-                    get_difference(beat_feature, i + rd, i + rd + 1))
-            for ld in range(difference_count):
-                beat_data_frame[LD + str(difference_count - ld - 1)].append(
-                    get_difference(beat_feature, i - ld, i - ld - 1))
+            for right in range(wing_length):
+                beat_data_frame[R + D + str(right)].append(
+                    get_difference(beat_feature, i + right, i + right + 1))
+            for left in range(wing_length):
+                beat_data_frame[L + D + str(wing_length - left - 1)].append(
+                    get_difference(beat_feature, i - left - 1, i - left))
+            beat_data_frame[V].append(beat_feature[i])
 
         beat_data_frame = DataFrame(beat_data_frame)
 

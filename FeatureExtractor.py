@@ -24,7 +24,7 @@ class FeatureExtractor:
         self.sample = sample
         self.win_length = int(self.sample.sampling_rate / self.sample.beat_per_second / 16)
         self.hop_length = int(self.win_length / 4)
-        self.n_fft = 2048
+        self.n_fft = 4096
 
     def save_spectrum(self, spectrum, y_axis: str, directory_name: str, spectrum_name: str):
         librosa.display.specshow(spectrum,
