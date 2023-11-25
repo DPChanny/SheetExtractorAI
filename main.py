@@ -13,7 +13,9 @@ samples = [Sample("marimba_60_1by4", 60),
            Sample("piano_120_1by4", 120),
            Sample("piano_120_1by8", 120),
            Sample("string_60", 60),
-           Sample("string_120", 120)]
+           Sample("string_120", 120),
+           Sample("woodwind_60", 60),
+           Sample("woodwind_120", 120)]
 
 train_samples = [Sample("marimba_60", 60),
                  Sample("marimba_60_1by4", 60)]
