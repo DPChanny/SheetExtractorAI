@@ -1,4 +1,4 @@
-start,end,answer
+start,end,status
 0,7,beat_start
 8,64,beat_middle
 64,72,beat_start

@@ -1,27 +1,29 @@
 from Statics import save_plot
-import numpy as np
+from numpy import linspace, array
 from pandas import DataFrame
 from FeatureExtractor import STFTFeature
 import matplotlib.pyplot as plt
+from enum import Enum
 
-S = "start"
-E = "end"
-L = "left"
-D = "difference_"
-R = "right_"
-A = "answer"
-V = "value"
-
-
-START = "beat_start"
-MIDDLE = "beat_middle"
-NONE = "beat_none"
+START = "start"
+END = "end"
+LEFT = "left"
+DIFFERENCE = "difference_"
+RIGHT = "right_"
+STATUS = "status"
+VALUE = "value"
 
 
-BC = {
-    START: "green",
-    MIDDLE: "blue",
-    NONE: "red"
+class BeatStatus(Enum):
+    START = "beat_start"
+    MIDDLE = "beat_middle"
+    NONE = "beat_none"
+
+
+BeatStatusColor = {
+    BeatStatus.START.value: "green",
+    BeatStatus.MIDDLE.value: "blue",
+    BeatStatus.NONE.value: "red"
 }
 
 
@@ -29,29 +31,29 @@ class DataFrameExtractor:
     def __init__(self, stft_feature: STFTFeature):
         self.stft_feature = stft_feature
 
-    def get_beat_answer(self, beat_answer_data_frame: DataFrame) -> list[str]:
-        beat_answer = [NONE for _ in range(len(self.stft_feature.magnitudes_sum))]
+    def get_beat_status(self, beat_status_data_frame: DataFrame) -> list[str]:
+        beat_status = [str(BeatStatus.NONE.value) for _ in range(len(self.stft_feature.magnitudes_sum))]
 
-        for index in beat_answer_data_frame.index:
-            for i in range(beat_answer_data_frame[S][index], beat_answer_data_frame[E][index] + 1):
-                beat_answer[i] = beat_answer_data_frame[A][index]
+        for index in beat_status_data_frame.index:
+            for i in range(beat_status_data_frame[START][index], beat_status_data_frame[END][index] + 1):
+                beat_status[i] = beat_status_data_frame[STATUS][index]
 
-        return beat_answer
+        return beat_status
 
-    def save_beat_answer_plot(self,
-                              beat_answer,
+    def save_beat_status_plot(self,
+                              beat_status,
                               directory_name: str,
                               plot_name: str):
 
-        plt.plot(np.linspace(start=0,
-                             stop=self.stft_feature.duration,
-                             num=len(self.stft_feature.magnitudes_sum)),
+        plt.plot(linspace(start=0,
+                          stop=self.stft_feature.duration,
+                          num=len(self.stft_feature.magnitudes_sum)),
                  self.stft_feature.magnitudes_sum, linewidth=0.25)
 
         for i in range(len(self.stft_feature.magnitudes_sum)):
-            plt.scatter(self.stft_feature.duration * i / len(beat_answer),
+            plt.scatter(self.stft_feature.duration * i / len(beat_status),
                         self.stft_feature.magnitudes_sum[i],
-                        s=0.25, c=BC[beat_answer[i]])
+                        s=0.25, c=BeatStatusColor[beat_status[i]])
 
         save_plot(directory_name, plot_name + "_time", "TIME")
 
@@ -61,7 +63,7 @@ class DataFrameExtractor:
         for i in range(len(self.stft_feature.magnitudes_sum)):
             plt.scatter(i,
                         self.stft_feature.magnitudes_sum[i],
-                        s=0.25, edgecolors="none", c=BC[beat_answer[i]])
+                        s=0.25, edgecolors="none", c=BeatStatusColor[beat_status[i]])
         plt.xticks(range(0, len(self.stft_feature.magnitudes_sum), 5), size=1)
 
         save_plot(directory_name, plot_name + "_index", "INDEX")
@@ -81,19 +83,19 @@ class DataFrameExtractor:
         beat_feature = self.stft_feature.magnitudes_sum / max(self.stft_feature.magnitudes_sum)
 
         for left in range(wing_length):
-            beat_data_frame[L + D + str(left)] = []
-        beat_data_frame[V] = []
+            beat_data_frame[LEFT + DIFFERENCE + str(left)] = []
+        beat_data_frame[VALUE] = []
         for right in range(wing_length):
-            beat_data_frame[R + D + str(right)] = []
+            beat_data_frame[RIGHT + DIFFERENCE + str(right)] = []
 
         for i in range(len(beat_feature)):
             for right in range(wing_length):
-                beat_data_frame[R + D + str(right)].append(
+                beat_data_frame[RIGHT + DIFFERENCE + str(right)].append(
                     get_difference(beat_feature, i + right, i + right + 1))
             for left in range(wing_length):
-                beat_data_frame[L + D + str(wing_length - left - 1)].append(
+                beat_data_frame[LEFT + DIFFERENCE + str(wing_length - left - 1)].append(
                     get_difference(beat_feature, i - left - 1, i - left))
-            beat_data_frame[V].append(beat_feature[i])
+            beat_data_frame[VALUE].append(beat_feature[i])
 
         beat_data_frame = DataFrame(beat_data_frame)
 
