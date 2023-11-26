@@ -1,3 +1,6 @@
+import sys
+from enum import Enum
+
 from keras import Sequential
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
 from keras.utils import to_categorical
@@ -5,18 +8,56 @@ from matplotlib import pyplot as plt
 from numpy import argmax, array
 from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
+from tensorflow.python.keras.callbacks import EarlyStopping
+
 from DataFrameExtractor import BeatStatus
-from Statics import save_plot
+from FeatureExtractor import STFTFeature
+from Sample import Sample
+from Statics import save_plot, RESULT, SOURCE
 from sklearn.model_selection import StratifiedKFold
 
 
-class BeatExtractor:
+class BeatType(Enum):
+    WHOLE = ""
+    HALF = ""
+    QUARTER = ""
+    EIGHTH = ""
+
+
+def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
+    min_error_beat_type = BeatType.WHOLE
+    min_error_beat_type_duration = sys.float_info.max
+    for beat_type, beat_type_duration in [(BeatType.WHOLE, 1 / sample.beat_per_second * 4),
+                                          (BeatType.HALF, 1 / sample.beat_per_second * 2),
+                                          (BeatType.QUARTER, 1 / sample.beat_per_second),
+                                          (BeatType.EIGHTH, 1 / sample.beat_per_second / 2)]:
+
+        if abs(beat_type_duration - duration) < min_error_beat_type_duration:
+            min_error_beat_type = beat_type
+            min_error_beat_type_duration = beat_type_duration - duration
+    return min_error_beat_type, min_error_beat_type_duration
+
+
+def extract_beat_type(beat_status: list[str], sample: Sample, stft_feature: STFTFeature):
+    last_beat_answer = BeatStatus.NONE.value
+    last_beat_start = 0
+
+    for index, value in enumerate(beat_status):
+        if value == BeatStatus.START:
+            if last_beat_answer == BeatStatus.MIDDLE.value:
+                min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type((index - last_beat_start) / stft_feature.duration, sample)
+
+            # if last_beat_answer == BeatStatus.NONE.value:
+        # if beat_answer[i] == BeatStatus.NONE:
+        #     if last_beat_answer == BeatStatus.NONE:
+
+
+class BeatStatusExtractor:
     def __init__(self, wing_length: int = 3):
         self.wing_length = wing_length
         self.model = Sequential()
         self.model.add(Bidirectional(LSTM(units=self.wing_length * 2 + 1,
                                           input_shape=[self.wing_length * 2 + 1, 1])))
-        self.model.add(Dense(units=self.wing_length * 2 + 1))
         self.model.add(Dense(units=self.wing_length * 2 + 1))
         self.model.add(Dense(units=3))
         self.model.add(Softmax())
@@ -24,18 +65,24 @@ class BeatExtractor:
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit([BeatStatus.START.value, BeatStatus.MIDDLE.value, BeatStatus.NONE.value])
 
-    def fit(self,
-            beat_data_frame: DataFrame,
-            beat_status: list[str],
-            epochs: int = 50,
-            n_splits: int = 5,
-            batch_size: int = 5):
+    def save_model(self, directory_name: str, model_name: str):
+        self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + model_name + "/model")
 
+    def load_model(self, directory_name: str, model_name: str):
+        self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + model_name + "/model")
+
+    def fit_model(self,
+                  beat_data_frame: DataFrame,
+                  beat_status: list[str],
+                  epochs: int = 200,
+                  n_splits: int = 5):
         beat_data = beat_data_frame.values
         beat_status = array(beat_status)
 
         accuracy = []
         val_accuracy = []
+        loss = []
+        val_loss = []
 
         for train, val in StratifiedKFold(n_splits=n_splits, shuffle=True).split(beat_data, beat_status):
             train_beat_data, val_beat_data = beat_data[train], beat_data[val]
@@ -53,14 +100,18 @@ class BeatExtractor:
                                      train_beat_status,
                                      validation_data=(val_beat_data,
                                                       val_beat_status),
-                                     epochs=epochs,
-                                     batch_size=batch_size)
+                                     epochs=epochs)
 
             accuracy += history.history['accuracy']
             val_accuracy += history.history['val_accuracy']
+            loss += history.history['loss']
+            val_loss += history.history['val_loss']
 
-        plt.plot(accuracy)
-        plt.plot(val_accuracy)
+        plt.plot(accuracy, label="accuracy")
+        plt.plot(val_accuracy, label="val_accuracy")
+        plt.plot(loss, label="loss")
+        plt.plot(val_loss, label="val_loss")
+        plt.legend()
         plt.ylim(0, 1)
         save_plot("", "train_history", "Accuracy")
 
@@ -69,21 +120,3 @@ class BeatExtractor:
                                                    beat_data_frame.values.shape[1], 1)
 
         return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data), axis=1))
-
-        # last_beat_answer = BeatStatus.NONE.value
-        # last_beat_start = 0
-
-        # def get_beat(start: int, end: int) -> tuple[bool, int]:
-        #     duration = (end - start) / data_frame_extractor.stft_feature.duration
-        #      if duration < feature_extractor.sample.beat_per_minute
-
-        # for i in range(beat_status):
-        #     if beat_status[i] == BeatStatus.START:
-        #         if last_beat_answer == BeatStatus.NONE:
-        #             last_beat_start = i
-        #             last_beat_answer = BeatStatus.START
-        #         if last_beat_answer == BeatStatus.MIDDLE:
-        #             last_beat_start = i
-        #             last_beat_answer = BeatStatus.START
-        #     # if beat_answer[i] == BeatStatus.NONE:
-        #     #     if last_beat_answer == BeatStatus.NONE:

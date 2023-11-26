@@ -1,2 +1,0 @@
-save & load weight 구현
-early stopping 구현
