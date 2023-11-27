@@ -1,4 +1,3 @@
-import sys
 import librosa.feature
 import matplotlib.pyplot as plt
 from numpy import ndarray, array, linspace, clip
@@ -11,19 +10,16 @@ class STFTFeature:
     def __init__(self,
                  magnitudes_db: ndarray,
                  magnitudes_mel_db: ndarray,
-                 magnitudes_sum: ndarray,
-                 duration: float):
+                 magnitudes_sum: ndarray):
         self.magnitudes_db = magnitudes_db
         self.magnitudes_mel_db = magnitudes_mel_db
         self.magnitudes_sum = magnitudes_sum
-        self.duration = duration
 
 
 class WaveFeature:
-    def __init__(self, amplitudes, amplitudes_peaks, duration: float):
+    def __init__(self, amplitudes, amplitudes_peaks):
         self.amplitudes = amplitudes
         self.amplitudes_peaks = amplitudes_peaks
-        self.duration = duration
 
 
 def save_spectrum_plot(sample: Sample,
@@ -46,9 +42,9 @@ def save_spectrum_plot(sample: Sample,
 # 샘플 파형을 start 에서 end 까지 분석
 def extract_wave_feature(sample: Sample) -> WaveFeature:
     amplitudes = sample.amplitudes
-    amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, sys.float_info.max))
+    amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, max(abs(amplitudes))))
 
-    return WaveFeature(amplitudes, amplitudes_peaks, sample.duration)
+    return WaveFeature(amplitudes, amplitudes_peaks)
 
 
 def save_wave_feature_plot(sample: Sample,
@@ -93,8 +89,7 @@ def extract_stft_feature(sample: Sample) -> STFTFeature:
 
     return STFTFeature(magnitudes_db,
                        magnitudes_mel_db,
-                       array(magnitudes_sum),
-                       sample.duration)
+                       array(magnitudes_sum))
 
 
 def save_stft_feature_plot(sample: Sample,

@@ -3,6 +3,13 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="\result\marimba_60\train\marimba_60.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\source\marimba_60_1by4_beat_state_data_frame.csv">
           <value>
             <Attribute>

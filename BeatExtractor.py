@@ -1,4 +1,4 @@
-from LoadSave import load_data_frame, save_plot, RESULT, SOURCE
+from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
 from enum import Enum
 from Sample import Sample
 from pandas import DataFrame
@@ -15,7 +15,7 @@ from keras.layers import LSTM, Dense, Softmax, Bidirectional
 
 START = "start"
 END = "end"
-LEFT = "left"
+LEFT = "left_"
 DIFFERENCE = "difference_"
 RIGHT = "right_"
 STATES = "state"
@@ -56,33 +56,34 @@ def load_beat_state_data_frame(directory_name: str, beat_state_data_frame_name: 
     return load_data_frame(directory_name, beat_state_data_frame_name + ".bsdf")
 
 
-def save_beat_state_plot(stft_feature: STFTFeature,
+def save_beat_state_plot(sample: Sample,
+                         stft_feature: STFTFeature,
                          beat_state,
                          directory_name: str,
                          plot_name: str):
 
     plt.plot(linspace(start=0,
-                      stop=stft_feature.duration,
+                      stop=sample.duration,
                       num=len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.25)
+             stft_feature.magnitudes_sum, linewidth=0.2)
 
     for index in range(len(stft_feature.magnitudes_sum)):
-        plt.scatter(stft_feature.duration * index / len(beat_state),
+        plt.scatter(sample.duration * index / len(beat_state),
                     stft_feature.magnitudes_sum[index],
-                    s=0.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+                    s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
 
-    save_plot(directory_name, plot_name + ".bst", "TIME")
+    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State Time")
 
     plt.plot(range(len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.25)
+             stft_feature.magnitudes_sum, linewidth=0.2)
 
     for index in range(len(stft_feature.magnitudes_sum)):
         plt.scatter(index,
                     stft_feature.magnitudes_sum[index],
-                    s=0.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+                    s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
     plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1)
 
-    save_plot(directory_name, plot_name + ".bsi", "INDEX")
+    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State Index")
 
 
 def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> DataFrame:
@@ -117,6 +118,10 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> 
     return beat_data_frame
 
 
+def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, beat_data_frame_name: str):
+    save_data_frame(directory_name, beat_data_frame_name + ".bdf", beat_data_frame)
+
+
 def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
     min_error_beat_type = BeatType.WHOLE
     min_error_beat_type_duration = 1 / sample.beat_per_second * 4
@@ -131,7 +136,7 @@ def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, 
     return min_error_beat_type, min_error_beat_type_duration
 
 
-def extract_beat_type(beat_state: list[str], sample: Sample, stft_feature: STFTFeature) -> list[tuple[int, int, str]]:
+def extract_beat_type(sample: Sample, beat_state: list[str]) -> list[tuple[int, int, str]]:
     error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
 
     beat_type = []
@@ -143,14 +148,14 @@ def extract_beat_type(beat_state: list[str], sample: Sample, stft_feature: STFTF
     for index, value in enumerate(beat_state):
         if value == BeatState.START.value:
             if last_beat_state == BeatState.MIDDLE.value:
-                duration = (index - last_beat_start_index) / len(beat_state) * stft_feature.duration
+                duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
                     beat_type.append((last_beat_start_index, index, min_error_beat_type.value + "_note"))
                     last_beat_state = value
                     last_beat_start_index = index
             if last_beat_state == BeatState.NONE.value:
-                duration = (index - last_beat_none_index) / len(beat_state) * stft_feature.duration
+                duration = (index - last_beat_none_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
                     beat_type.append((last_beat_none_index, index, min_error_beat_type.value + "_rest"))
@@ -158,7 +163,7 @@ def extract_beat_type(beat_state: list[str], sample: Sample, stft_feature: STFTF
                 last_beat_start_index = index
         if value == BeatState.NONE.value:
             if last_beat_state == BeatState.MIDDLE.value:
-                duration = (index - last_beat_start_index) / len(beat_state) * stft_feature.duration
+                duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
                     beat_type.append((last_beat_start_index, index, min_error_beat_type.value + "_note"))
@@ -169,12 +174,12 @@ def extract_beat_type(beat_state: list[str], sample: Sample, stft_feature: STFTF
                 last_beat_state = value
 
     if last_beat_state == BeatState.MIDDLE.value:
-        duration = (len(beat_state) - last_beat_start_index) / len(beat_state) * stft_feature.duration
+        duration = (len(beat_state) - last_beat_start_index) / len(beat_state) * sample.duration
         min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
         if abs(min_error_beat_type_duration - duration) < error_range:
             beat_type.append((last_beat_start_index, len(beat_state) - 1, min_error_beat_type.value + "_note"))
     if last_beat_state == BeatState.NONE.value:
-        duration = (len(beat_state) - last_beat_none_index) / len(beat_state) * stft_feature.duration
+        duration = (len(beat_state) - last_beat_none_index) / len(beat_state) * sample.duration
         min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
         if abs(min_error_beat_type_duration - duration) < error_range:
             beat_type.append((last_beat_none_index, len(beat_state) - 1, min_error_beat_type.value + "_rest"))
@@ -195,11 +200,11 @@ class BeatStateExtractor:
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit([BeatState.START.value, BeatState.MIDDLE.value, BeatState.NONE.value])
 
-    def save_model(self, directory_name: str, model_name: str):
-        self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + model_name + "/model")
+    def save(self, directory_name: str, beat_extractor_name: str):
+        self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
-    def load_model(self, directory_name: str, model_name: str):
-        self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + model_name + "/model")
+    def load(self, directory_name: str, beat_extractor_name: str):
+        self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
     def fit_model(self,
                   beat_data_frame: DataFrame,
