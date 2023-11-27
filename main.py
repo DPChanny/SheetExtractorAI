@@ -1,6 +1,6 @@
 from pandas import DataFrame, concat
 from FeatureExtractor import extract_stft_feature, save_stft_feature_plot
-from BeatExtractor import BeatStateExtractor, extract_beat_type, save_beat_data_frame
+from BeatExtractor import BeatStateExtractor, extract_beat_type, save_beat_data_frame, save_beat_extractor_history_plot
 from BeatExtractor import load_beat_state_data_frame, save_beat_state_plot
 from BeatExtractor import extract_beat_data_frame, extract_beat_state
 from Sample import Sample
@@ -34,6 +34,7 @@ PLOT_TRAIN_STFT_FEATURE = True
 PLOT_STFT_FEATURE = True
 PLOT_TRAIN_BEAT_STATUS = True
 PLOT_BEAT_STATUS = True
+PLOT_HISTORY = True
 
 beat_state_extractor = BeatStateExtractor(wing_length=WING_LENGTH)
 
@@ -67,11 +68,19 @@ if TRAIN_BEAT_EXTRACTOR:
                                  train_sample.name + "/train",
                                  train_sample.name)
 
-    beat_state_extractor.fit_model(train_beat_data_frame,
-                                   train_beat_state,
-                                   epochs=EPOCHS,
-                                   n_splits=N_SPLITS,
-                                   batch_size=BATCH_SIZE)
+    accuracy, val_accuracy, loss, val_loss = beat_state_extractor.fit(train_beat_data_frame,
+                                                                      train_beat_state,
+                                                                      epochs=EPOCHS,
+                                                                      n_splits=N_SPLITS,
+                                                                      batch_size=BATCH_SIZE)
+
+    if PLOT_HISTORY:
+        save_beat_extractor_history_plot(accuracy,
+                                         val_accuracy,
+                                         loss,
+                                         val_loss,
+                                         "beat_extractor",
+                                         BEAT_EXTRACTOR_NAME)
 
     beat_state_extractor.save("beat_extractor", BEAT_EXTRACTOR_NAME)
 

@@ -1,17 +1,18 @@
-from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
 from enum import Enum
-from Sample import Sample
-from pandas import DataFrame
-from keras import Sequential
-from numpy import argmax, array, linspace
-from matplotlib import pyplot as plt
-from keras.utils import to_categorical
-from FeatureExtractor import STFTFeature
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import StratifiedKFold
-from tensorflow.python.keras.callbacks import EarlyStopping
-from keras.layers import LSTM, Dense, Softmax, Bidirectional
 
+from keras import Sequential
+from keras.layers import LSTM, Dense, Softmax, Bidirectional
+from keras.utils import to_categorical
+from matplotlib import pyplot as plt
+from numpy import argmax, array, linspace
+from pandas import DataFrame
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.python.keras.callbacks import EarlyStopping
+
+from FeatureExtractor import STFTFeature
+from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
+from Sample import Sample
 
 START = "start"
 END = "end"
@@ -52,8 +53,8 @@ def extract_beat_state(stft_feature: STFTFeature, beat_state_data_frame: DataFra
     return beat_state
 
 
-def load_beat_state_data_frame(directory_name: str, beat_state_data_frame_name: str):
-    return load_data_frame(directory_name, beat_state_data_frame_name + ".bsdf")
+def load_beat_state_data_frame(directory_name: str, data_frame_name: str):
+    return load_data_frame(directory_name, data_frame_name + ".bsdf")
 
 
 def save_beat_state_plot(sample: Sample,
@@ -118,8 +119,8 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> 
     return beat_data_frame
 
 
-def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, beat_data_frame_name: str):
-    save_data_frame(directory_name, beat_data_frame_name + ".bdf", beat_data_frame)
+def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, data_frame_name: str):
+    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame)
 
 
 def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
@@ -206,12 +207,12 @@ class BeatStateExtractor:
     def load(self, directory_name: str, beat_extractor_name: str):
         self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
-    def fit_model(self,
-                  beat_data_frame: DataFrame,
-                  beat_state: list[str],
-                  epochs: int = 2 ** 10,
-                  n_splits: int = 5,
-                  batch_size: int = 2 ** 5):
+    def fit(self,
+            beat_data_frame: DataFrame,
+            beat_state: list[str],
+            epochs: int = 2 ** 10,
+            n_splits: int = 5,
+            batch_size: int = 2 ** 5) -> tuple[list[float], list[float], list[float], list[float]]:
         beat_data = beat_data_frame.values
         beat_state = array(beat_state)
 
@@ -254,16 +255,25 @@ class BeatStateExtractor:
             loss += history.history['loss']
             val_loss += history.history['val_loss']
 
-        plt.plot(accuracy, label="accuracy")
-        plt.plot(val_accuracy, label="val_accuracy")
-        plt.plot(loss, label="loss")
-        plt.plot(val_loss, label="val_loss")
-        plt.legend()
-        plt.ylim(0, 1)
-        save_plot("", "train_history", "Accuracy")
+        return accuracy, val_accuracy, loss, val_loss
 
     def extract_beat_state(self, beat_data_frame: DataFrame) -> list[str]:
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
         return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data), axis=1))
+
+
+def save_beat_extractor_history_plot(accuracy: list[float],
+                                     val_accuracy: list[float],
+                                     loss: list[float],
+                                     val_loss: list[float],
+                                     directory_name: str,
+                                     plot_name: str):
+    plt.plot(accuracy, label="accuracy")
+    plt.plot(val_accuracy, label="val_accuracy")
+    plt.plot(loss, label="loss")
+    plt.plot(val_loss, label="val_loss")
+    plt.legend()
+    plt.ylim(0, 1)
+    save_plot(directory_name, plot_name + ".beh", "Beat Extractor History")

@@ -26,8 +26,8 @@ def save_spectrum_plot(sample: Sample,
                        spectrum,
                        y_axis: str,
                        directory_name: str,
-                       spectrum_name: str,
-                       spectrum_title: str):
+                       plot_name: str,
+                       plot_title: str):
     librosa.display.specshow(spectrum,
                              sr=sample.sampling_rate,
                              win_length=sample.win_length,
@@ -36,7 +36,7 @@ def save_spectrum_plot(sample: Sample,
                              y_axis=y_axis,
                              x_axis='time')
     plt.colorbar(format='%2.0f dB')
-    save_plot(directory_name, spectrum_name, spectrum_title)
+    save_plot(directory_name, plot_name, plot_title)
 
 
 # 샘플 파형을 start 에서 end 까지 분석
