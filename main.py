@@ -1,9 +1,9 @@
-from pandas import read_csv, DataFrame, concat
-from BeatStatusExtractor import BeatStatusExtractor
-from DataFrameExtractor import DataFrameExtractor
-from FeatureExtractor import FeatureExtractor
+from pandas import DataFrame, concat
+from FeatureExtractor import extract_stft_feature, save_stft_feature_plot
+from BeatExtractor import BeatStateExtractor, extract_beat_type
+from BeatExtractor import load_beat_state_data_frame, save_beat_state_plot
+from BeatExtractor import extract_beat_data_frame, extract_beat_state
 from Sample import Sample
-from Statics import SOURCE
 
 samples = [Sample("marimba_60", 60),
            Sample("marimba_60_1by4", 60),
@@ -13,55 +13,79 @@ samples = [Sample("marimba_60", 60),
            Sample("piano_60_1by4", 60),
            Sample("piano_60_1by8", 60),
            Sample("piano_120_1by4", 120),
-           Sample("piano_120_1by8", 120),
-           Sample("string_60", 60),
-           Sample("string_120", 120),
-           Sample("woodwind_60", 60),
-           Sample("woodwind_120", 120)]
+           Sample("piano_120_1by8", 120)]
 
 train_samples = [Sample("marimba_60", 60),
                  Sample("marimba_60_1by4", 60)]
 
 WING_LENGTH = 5
-EPOCHS = 200
+
+BEAT_EXTRACTOR_VERSION = "v1.5"
+TRAIN_BEAT_EXTRACTOR = True
+
+EPOCHS = 2 ** 10
 N_SPLITS = 5
-STFT_FEATURE_PLOT = False
-TRAIN_BEAT_STATUS_PLOT = False
-BEAT_STATUS_PLOT = True
+BATCH_SIZE = 2 ** 5
 
-beat_status_extractor = BeatStatusExtractor(wing_length=WING_LENGTH)
+PLOT_TRAIN_STFT_FEATURE = True
+PLOT_STFT_FEATURE = True
+PLOT_TRAIN_BEAT_STATUS = True
+PLOT_BEAT_STATUS = True
 
-train_beat_data_frame = DataFrame()
-train_beat_status = []
+beat_state_extractor = BeatStateExtractor(wing_length=WING_LENGTH)
 
-for train_sample in train_samples:
-    train_data_frame_extractor = DataFrameExtractor(
-        FeatureExtractor(train_sample).extract_stft_feature(plot=STFT_FEATURE_PLOT))
-    train_beat_data_frame = concat([train_beat_data_frame,
-                                    train_data_frame_extractor.extract_beat_data_frame(wing_length=WING_LENGTH)])
-    train_beat_status += train_data_frame_extractor.get_beat_status(
-        read_csv("./" + SOURCE + "/" + train_sample.sample_name + "_beat_status_data_frame.csv"))
+if TRAIN_BEAT_EXTRACTOR:
+    train_beat_data_frame = DataFrame()
+    train_beat_state = []
 
-    if TRAIN_BEAT_STATUS_PLOT:
-        train_data_frame_extractor.save_beat_status_plot(train_beat_status,
-                                                         train_sample.sample_name,
-                                                         train_sample.sample_name + "_beat_status")
+    for train_sample in train_samples:
+        train_sample_stft_feature = extract_stft_feature(train_sample)
+        train_beat_data_frame = concat([train_beat_data_frame,
+                                        extract_beat_data_frame(train_sample_stft_feature, wing_length=WING_LENGTH)])
+        train_beat_state += extract_beat_state(train_sample_stft_feature,
+                                               load_beat_state_data_frame(train_sample.name,
+                                                                          train_sample.name))
 
-beat_status_extractor.fit_model(train_beat_data_frame,
-                                train_beat_status,
-                                epochs=EPOCHS,
-                                n_splits=N_SPLITS)
+        if PLOT_TRAIN_STFT_FEATURE:
+            save_stft_feature_plot(train_sample,
+                                   train_sample_stft_feature,
+                                   train_sample.name,
+                                   train_sample.name)
 
-beat_status_extractor.save_model("v1", "v1.1")
+        if PLOT_TRAIN_BEAT_STATUS:
+            save_beat_state_plot(train_sample_stft_feature,
+                                 train_beat_state,
+                                 train_sample.name,
+                                 train_sample.name)
 
-# beat_status_extractor.load_model("v1", "v1.1")
+    beat_state_extractor.fit_model(train_beat_data_frame,
+                                   train_beat_state,
+                                   epochs=EPOCHS,
+                                   n_splits=N_SPLITS,
+                                   batch_size=BATCH_SIZE)
+
+    beat_state_extractor.save_model("v1", BEAT_EXTRACTOR_VERSION)
+
+if not TRAIN_BEAT_EXTRACTOR:
+    beat_state_extractor.load_model("v1", BEAT_EXTRACTOR_VERSION)
 
 for sample in samples:
-    data_frame_extractor = DataFrameExtractor(FeatureExtractor(sample).extract_stft_feature(plot=STFT_FEATURE_PLOT))
-    beat_data_frame = data_frame_extractor.extract_beat_data_frame(wing_length=WING_LENGTH)
-    beat_status = beat_status_extractor.extract_beat_status(beat_data_frame)
+    sample_stft_feature = extract_stft_feature(sample)
+    beat_data_frame = extract_beat_data_frame(sample_stft_feature, wing_length=WING_LENGTH)
+    beat_state = beat_state_extractor.extract_beat_state(beat_data_frame)
 
-    if BEAT_STATUS_PLOT:
-        data_frame_extractor.save_beat_status_plot(beat_status,
-                                                   sample.sample_name,
-                                                   sample.sample_name + "_beat_status")
+    if PLOT_STFT_FEATURE:
+        save_stft_feature_plot(sample,
+                               sample_stft_feature,
+                               sample.name,
+                               sample.name)
+
+    if PLOT_BEAT_STATUS:
+        save_beat_state_plot(sample_stft_feature,
+                             beat_state,
+                             sample.name,
+                             sample.name)
+
+    beat_type = extract_beat_type(beat_state, sample, sample_stft_feature)
+
+    print(len(beat_type), beat_type)

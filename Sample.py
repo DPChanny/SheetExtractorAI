@@ -1,11 +1,17 @@
-from Statics import SOURCE
+from LoadSave import SOURCE
 from librosa import load, get_duration
 
 
 class Sample:
-    def __init__(self, sample_name: str, sample_beat_per_minute: int):
-        self.beat_per_minute = sample_beat_per_minute
+    def __init__(self, name: str, beat_per_minute: int):
+        self.beat_per_minute = beat_per_minute
         self.beat_per_second = self.beat_per_minute / 60
-        self.sample_name = sample_name
-        self.amplitudes, self.sampling_rate = load("./" + SOURCE + "/" + sample_name + ".wav")
-        self.sample_time = get_duration(y=self.amplitudes, sr=self.sampling_rate)
+
+        self.name = name
+
+        self.amplitudes, self.sampling_rate = load("./" + SOURCE + "/" + name + ".wav")
+        self.duration = get_duration(y=self.amplitudes, sr=self.sampling_rate)
+
+        self.win_length = int(self.sampling_rate / self.beat_per_second / 16)
+        self.hop_length = int(self.win_length / 4)
+        self.n_fft = 4096

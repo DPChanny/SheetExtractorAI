@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from numpy import ndarray, array, linspace, clip
 from scipy.signal import find_peaks
 from Sample import Sample
-from Statics import save_plot
+from LoadSave import save_plot
 
 
 class STFTFeature:
@@ -19,113 +19,107 @@ class STFTFeature:
         self.duration = duration
 
 
-class FeatureExtractor:
-    def __init__(self, sample: Sample):
-        self.sample = sample
-        self.win_length = int(self.sample.sampling_rate / self.sample.beat_per_second / 16)
-        self.hop_length = int(self.win_length / 4)
-        self.n_fft = 4096
+class WaveFeature:
+    def __init__(self, amplitudes, amplitudes_peaks, duration: float):
+        self.amplitudes = amplitudes
+        self.amplitudes_peaks = amplitudes_peaks
+        self.duration = duration
 
-    def save_spectrum(self, spectrum, y_axis: str, directory_name: str, spectrum_name: str):
-        librosa.display.specshow(spectrum,
-                                 sr=self.sample.sampling_rate,
-                                 win_length=self.win_length,
-                                 hop_length=self.hop_length,
-                                 n_fft=self.n_fft,
-                                 y_axis=y_axis,
-                                 x_axis='time')
-        plt.colorbar(format='%2.0f dB')
-        save_plot(directory_name, spectrum_name, spectrum.shape)
 
-    # 샘플 파형을 start 에서 end 까지 분석
-    def extract_wave_feature(self, start: int = 0, end: int = sys.maxsize, plot: bool = False):
-        end = min(end, len(self.sample.amplitudes))
-        amplitudes = self.sample.amplitudes[start:end]
+def save_spectrum_plot(sample: Sample,
+                       spectrum,
+                       y_axis: str,
+                       directory_name: str,
+                       spectrum_name: str,
+                       spectrum_title: str):
+    librosa.display.specshow(spectrum,
+                             sr=sample.sampling_rate,
+                             win_length=sample.win_length,
+                             hop_length=sample.hop_length,
+                             n_fft=sample.n_fft,
+                             y_axis=y_axis,
+                             x_axis='time')
+    plt.colorbar(format='%2.0f dB')
+    save_plot(directory_name, spectrum_name, spectrum_title)
 
-        amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, sys.float_info.max))
 
-        if plot:
-            plt.plot(amplitudes, linewidth=0.05)
-            save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_wave",
-                      self.sample.sample_name + "_wave " + str((start, end)), str(len(amplitudes)))
+# 샘플 파형을 start 에서 end 까지 분석
+def extract_wave_feature(sample: Sample) -> WaveFeature:
+    amplitudes = sample.amplitudes
+    amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, sys.float_info.max))
 
-            plt.plot(amplitudes_peaks,
-                     amplitudes[amplitudes_peaks], linewidth=0.05)
-            plt.scatter(amplitudes_peaks,
-                        amplitudes[amplitudes_peaks], s=0.05)
-            save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_wave_clipped_peaks",
-                      self.sample.sample_name + "_wave_clipped_peaks " + str((start, end)), str(len(amplitudes_peaks)))
+    return WaveFeature(amplitudes, amplitudes_peaks, sample.duration)
 
-    # 샘플 파형 전체를 division_range 만큼 묶어서 분석
-    def extract_wave_features(self, division_range: int = sys.maxsize, plot: bool = False):
-        division_range = min(division_range, len(self.sample.amplitudes))
-        for i in range(int(len(self.sample.amplitudes) / division_range)):
-            self.extract_wave_feature(i * division_range,
-                                      min(i * division_range + division_range, len(self.sample.amplitudes)),
-                                      plot)
 
-    # 샘플 주파수를 start 부터 end 까지 분석
-    # 샘플 주파수의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
-    def extract_stft_feature(self, start: int = 0, end: int = sys.maxsize, plot: bool = False) -> STFTFeature:
-        end = min(end, len(self.sample.amplitudes))
-        amplitudes = self.sample.amplitudes[start:end]
+def save_wave_feature_plot(sample: Sample,
+                           wave_feature: WaveFeature,
+                           directory_name: str,
+                           plot_name: str):
+    plt.plot(wave_feature.amplitudes, linewidth=0.05)
+    save_plot(directory_name,
+              plot_name + ".wfa",
+              sample.name + " Wave Feature: Amplitudes")
 
-        print("STFT:", self.sample.sample_name, str((start, end)))
-        amplitudes_stft = librosa.stft(amplitudes,
-                                       win_length=self.win_length,
-                                       hop_length=self.hop_length,
-                                       n_fft=self.n_fft)
+    plt.plot(wave_feature.amplitudes_peaks,
+             sample.amplitudes[wave_feature.amplitudes_peaks], linewidth=0.05)
+    plt.scatter(wave_feature.amplitudes_peaks,
+                sample.amplitudes[wave_feature.amplitudes_peaks], s=0.05)
+    save_plot(directory_name,
+              plot_name + ".wfap",
+              sample.name + "Wave Feature: Amplitudes Peaks")
 
-        magnitudes = abs(amplitudes_stft)
-        magnitudes_db = librosa.amplitude_to_db(magnitudes)
-        print("RESULT:", str(magnitudes.shape))
 
-        print("MEL:", self.sample.sample_name, str((start, end)))
-        magnitudes_mel = librosa.feature.melspectrogram(S=magnitudes,
-                                                        sr=self.sample.sampling_rate,
-                                                        win_length=self.win_length,
-                                                        hop_length=self.hop_length,
-                                                        n_fft=self.n_fft)
-        magnitudes_mel_db = librosa.amplitude_to_db(magnitudes_mel)
-        print("RESULT: " + str(magnitudes_mel_db.shape))
+# 샘플 주파수를 start 부터 end 까지 분석
+# 샘플 주파수의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
+def extract_stft_feature(sample: Sample) -> STFTFeature:
+    amplitudes_stft = librosa.stft(sample.amplitudes,
+                                   win_length=sample.win_length,
+                                   hop_length=sample.hop_length,
+                                   n_fft=sample.n_fft)
 
-        if plot:
-            self.save_spectrum(magnitudes_db,
-                               'log',
-                               self.sample.sample_name + "/" + self.sample.sample_name + "_stft_log",
-                               self.sample.sample_name + "_stft_log " + str((start, end)))
+    magnitudes = abs(amplitudes_stft)
+    magnitudes_db = librosa.amplitude_to_db(magnitudes)
 
-            self.save_spectrum(magnitudes_mel_db,
-                               'mel',
-                               self.sample.sample_name + "/" + self.sample.sample_name + "_stft_mel",
-                               self.sample.sample_name + "_stft_mel " + str((start, end)))
+    magnitudes_mel = librosa.feature.melspectrogram(S=magnitudes,
+                                                    sr=sample.sampling_rate,
+                                                    win_length=sample.win_length,
+                                                    hop_length=sample.hop_length,
+                                                    n_fft=sample.n_fft)
+    magnitudes_mel_db = librosa.amplitude_to_db(magnitudes_mel)
 
-        magnitudes_sum = []
-        for i in range(magnitudes.shape[1]):
-            magnitudes_sum.append(sum(magnitudes[:, i]))
+    magnitudes_sum = []
+    for i in range(magnitudes.shape[1]):
+        magnitudes_sum.append(sum(magnitudes[:, i]))
 
-        if plot:
-            plt.plot(linspace(start=0,
-                              stop=self.sample.sample_time * len(amplitudes) / len(self.sample.amplitudes),
-                              num=len(magnitudes_sum)),
-                     magnitudes_sum, linewidth=0.5)
-            save_plot(self.sample.sample_name + "/" + self.sample.sample_name + "_stft_sum",
-                      self.sample.sample_name + "_stft_sum " + str((start, end)), str(len(magnitudes_sum)))
+    return STFTFeature(magnitudes_db,
+                       magnitudes_mel_db,
+                       array(magnitudes_sum),
+                       sample.duration)
 
-        return STFTFeature(magnitudes_db,
-                           magnitudes_mel_db,
-                           array(magnitudes_sum),
-                           self.sample.sample_time * len(amplitudes) / len(self.sample.amplitudes))
 
-    # 샘플 주파수 전체를 division_range 만큼 묶어서 분석
-    # 각 샘플 주파수 묶음의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
-    def extract_stft_features(self, division_range: int = sys.maxsize, plot: bool = False) -> list[STFTFeature]:
-        stft_features = []
-        division_range = min(division_range, len(self.sample.amplitudes))
-        for i in range(int(len(self.sample.amplitudes) / division_range)):
-            stft_features.append(
-                self.extract_stft_feature(i * division_range,
-                                          min(i * division_range + division_range, len(self.sample.amplitudes)),
-                                          plot))
-        return stft_features
-    
+def save_stft_feature_plot(sample: Sample,
+                           stft_feature: STFTFeature,
+                           directory_name: str,
+                           plot_name: str):
+    save_spectrum_plot(sample,
+                       stft_feature.magnitudes_db,
+                       'log',
+                       directory_name,
+                       plot_name + ".sfl",
+                       sample.name + " STFT Feature: Magnitudes dB")
+
+    save_spectrum_plot(sample,
+                       stft_feature.magnitudes_mel_db,
+                       'mel',
+                       directory_name,
+                       sample.name + ".sfm",
+                       sample.name + " STFT Feature: Magnitudes Mel dB")
+
+    plt.plot(linspace(start=0,
+                      stop=sample.duration * len(sample.amplitudes) / len(sample.amplitudes),
+                      num=len(stft_feature.magnitudes_sum)),
+             stft_feature.magnitudes_sum, linewidth=0.5)
+
+    save_plot(directory_name,
+              plot_name + ".sfs",
+              sample.name + " STFT Feature: Magnitudes Sum")
