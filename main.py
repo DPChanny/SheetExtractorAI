@@ -5,12 +5,12 @@ from BeatExtractor import load_beat_state_data_frame, save_beat_state_plot
 from BeatExtractor import extract_beat_data_frame, extract_beat_state
 from Sample import Sample
 
-LOG = False
+LOG = True
 
 WING_LENGTH = 5
 
-BEAT_EXTRACTOR_NAME = "beat_extractor_0_0"
-TRAIN_BEAT_EXTRACTOR = False
+BEAT_EXTRACTOR_NAME = "beat_extractor_0"
+TRAIN_BEAT_EXTRACTOR = True
 
 EPOCHS = 2 ** 10
 N_SPLITS = 5
