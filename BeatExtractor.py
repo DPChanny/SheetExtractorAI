@@ -19,41 +19,41 @@ END = "end"
 LEFT = "left_"
 DIFFERENCE = "difference_"
 RIGHT = "right_"
-STATES = "state"
+BEAT_STATE = "beat_state"
 VALUE = "value"
 
 
 class BeatType(Enum):
-    WHOLE = "whole"
-    HALF = "half"
-    QUARTER = "quarter"
-    EIGHTH = "eighth"
+    WHOLE = "beat_type_whole"
+    HALF = "beat_type_half"
+    QUARTER = "beat_type_quarter"
+    EIGHTH = "beat_type_eighth"
 
 
 class BeatState(Enum):
-    START = "beat_start"
-    MIDDLE = "beat_middle"
-    NONE = "beat_none"
+    START = "beat_state_start"
+    MIDDLE = "beat_state_middle"
+    NONE = "beat_state_none"
 
 
 BeatStatusColor = {
-    BeatState.START.value: "green",
-    BeatState.MIDDLE.value: "blue",
-    BeatState.NONE.value: "red"
+    BeatState.START: "green",
+    BeatState.MIDDLE: "blue",
+    BeatState.NONE: "red"
 }
 
 
 def extract_beat_state(sample: Sample,
                        stft_feature: STFTFeature,
                        beat_state_data_frame: DataFrame,
-                       log: bool = False) -> list[str]:
+                       log: bool = False) -> list[BeatState]:
     if log:
         print("Extracting " + sample.name + " beat state")
-    beat_state = [str(BeatState.NONE.value) for _ in range(len(stft_feature.magnitudes_sum))]
+    beat_state = [BeatState.NONE for _ in range(len(stft_feature.magnitudes_sum))]
 
     for index in beat_state_data_frame.index:
         for i in range(beat_state_data_frame[START][index], beat_state_data_frame[END][index]):
-            beat_state[i] = beat_state_data_frame[STATES][index]
+            beat_state[i] = BeatState(beat_state_data_frame[BEAT_STATE][index])
 
     return beat_state
 
@@ -64,7 +64,7 @@ def load_beat_state_data_frame(directory_name: str, data_frame_name: str, log: b
 
 def save_beat_state_plot(sample: Sample,
                          stft_feature: STFTFeature,
-                         beat_state,
+                         beat_state: list[BeatState],
                          directory_name: str,
                          plot_name: str,
                          log: bool = False):
@@ -146,7 +146,9 @@ def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, 
     return min_error_beat_type, min_error_beat_type_duration
 
 
-def extract_beat_type(sample: Sample, beat_state: list[str], log: bool = False) -> list[tuple[int, int, str]]:
+def extract_beat_type(sample: Sample,
+                      beat_state: list[BeatState],
+                      log: bool = False) -> list[tuple[int, int, BeatType, bool]]:
     if log:
         print("Extracting " + sample.name + " beat type")
 
@@ -154,48 +156,48 @@ def extract_beat_type(sample: Sample, beat_state: list[str], log: bool = False) 
 
     beat_type = []
 
-    last_beat_state = BeatState.NONE.value
+    last_beat_state = BeatState.NONE
     last_beat_start_index = 0
     last_beat_none_index = 0
 
-    for index, value in enumerate(beat_state):
-        if value == BeatState.START.value:
-            if last_beat_state == BeatState.MIDDLE.value:
+    for index, state in enumerate(beat_state):
+        if state == BeatState.START:
+            if last_beat_state == BeatState.MIDDLE:
                 duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
-                    beat_type.append((last_beat_start_index, index, min_error_beat_type.value + "_note"))
-                    last_beat_state = value
+                    beat_type.append((last_beat_start_index, index, min_error_beat_type, True))
+                    last_beat_state = state
                     last_beat_start_index = index
-            if last_beat_state == BeatState.NONE.value:
+            if last_beat_state == BeatState.NONE:
                 duration = (index - last_beat_none_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
-                    beat_type.append((last_beat_none_index, index, min_error_beat_type.value + "_rest"))
-                last_beat_state = value
+                    beat_type.append((last_beat_none_index, index, min_error_beat_type, False))
+                last_beat_state = state
                 last_beat_start_index = index
-        if value == BeatState.NONE.value:
-            if last_beat_state == BeatState.MIDDLE.value:
+        if state == BeatState.NONE:
+            if last_beat_state == BeatState.MIDDLE:
                 duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
                 min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
                 if abs(min_error_beat_type_duration - duration) < error_range:
-                    beat_type.append((last_beat_start_index, index, min_error_beat_type.value + "_note"))
-                    last_beat_state = value
+                    beat_type.append((last_beat_start_index, index, min_error_beat_type, True))
+                    last_beat_state = state
                     last_beat_none_index = index
-        if value == BeatState.MIDDLE.value:
-            if last_beat_state != BeatState.NONE.value:
-                last_beat_state = value
+        if state == BeatState.MIDDLE:
+            if last_beat_state != BeatState.NONE:
+                last_beat_state = state
 
-    if last_beat_state == BeatState.MIDDLE.value:
+    if last_beat_state == BeatState.MIDDLE:
         duration = (len(beat_state) - last_beat_start_index) / len(beat_state) * sample.duration
         min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
         if abs(min_error_beat_type_duration - duration) < error_range:
-            beat_type.append((last_beat_start_index, len(beat_state) - 1, min_error_beat_type.value + "_note"))
-    if last_beat_state == BeatState.NONE.value:
+            beat_type.append((last_beat_start_index, len(beat_state) - 1, min_error_beat_type, True))
+    if last_beat_state == BeatState.NONE:
         duration = (len(beat_state) - last_beat_none_index) / len(beat_state) * sample.duration
         min_error_beat_type, min_error_beat_type_duration = get_min_error_beat_type(duration, sample)
         if abs(min_error_beat_type_duration - duration) < error_range:
-            beat_type.append((last_beat_none_index, len(beat_state) - 1, min_error_beat_type.value + "_rest"))
+            beat_type.append((last_beat_none_index, len(beat_state) - 1, min_error_beat_type, False))
 
     return beat_type
 
@@ -225,13 +227,13 @@ class BeatStateExtractor:
 
     def fit(self,
             beat_data_frame: DataFrame,
-            beat_state: list[str],
+            beat_state: list[BeatState],
             epochs: int = 2 ** 10,
             n_splits: int = 5,
             batch_size: int = 2 ** 5,
             log: bool = False) -> dict:
         beat_data = beat_data_frame.values
-        beat_state = array(beat_state)
+        beat_state = array([state.value for state in beat_state])
 
         accuracy = []
         val_accuracy = []
@@ -282,15 +284,17 @@ class BeatStateExtractor:
 
         return history
 
-    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[str]:
+    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
         if log:
             print("Extracting " + sample.name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
-        return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data,
-                                                                              verbose=2 if log else 0),
-                                                           axis=1))
+        beat_state = self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data,
+                                                                                    verbose=2 if log else 0),
+                                                                 axis=1))
+
+        return [BeatState(value) for value in beat_state]
 
 
 def save_beat_extractor_history_plot(history: dict,

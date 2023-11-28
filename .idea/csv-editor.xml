@@ -10,6 +10,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\source\marimba_60\marimba_60.bsdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\source\marimba_60_1by4\marimba_60_1by4.bsdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
