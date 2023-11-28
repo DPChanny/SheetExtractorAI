@@ -5,6 +5,8 @@ from scipy.signal import find_peaks
 from Sample import Sample
 from LoadSave import save_plot
 
+LOG = True
+
 
 class STFTFeature:
     def __init__(self,
@@ -41,6 +43,9 @@ def save_spectrum_plot(sample: Sample,
 
 # 샘플 파형을 start 에서 end 까지 분석
 def extract_wave_feature(sample: Sample) -> WaveFeature:
+    if LOG:
+        print("Extracting " + sample.name + " wave feature")
+
     amplitudes = sample.amplitudes
     amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, max(abs(amplitudes))))
 
@@ -68,6 +73,9 @@ def save_wave_feature_plot(sample: Sample,
 # 샘플 주파수를 start 부터 end 까지 분석
 # 샘플 주파수의 STFT Db(log), STFT MEL Db(log), STFT Sum 을 반환
 def extract_stft_feature(sample: Sample) -> STFTFeature:
+    if LOG:
+        print("Extracting " + sample.name + " stft feature")
+
     amplitudes_stft = librosa.stft(sample.amplitudes,
                                    win_length=sample.win_length,
                                    hop_length=sample.hop_length,

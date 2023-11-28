@@ -14,6 +14,8 @@ from FeatureExtractor import STFTFeature
 from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
 from Sample import Sample
 
+LOG = True
+
 START = "start"
 END = "end"
 LEFT = "left_"
@@ -43,7 +45,9 @@ BeatStatusColor = {
 }
 
 
-def extract_beat_state(stft_feature: STFTFeature, beat_state_data_frame: DataFrame) -> list[str]:
+def extract_beat_state(sample: Sample, stft_feature: STFTFeature, beat_state_data_frame: DataFrame) -> list[str]:
+    if LOG:
+        print("Extracting " + sample.name + " beat state")
     beat_state = [str(BeatState.NONE.value) for _ in range(len(stft_feature.magnitudes_sum))]
 
     for index in beat_state_data_frame.index:
@@ -73,7 +77,7 @@ def save_beat_state_plot(sample: Sample,
                     stft_feature.magnitudes_sum[index],
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
 
-    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State Time")
+    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time")
 
     plt.plot(range(len(stft_feature.magnitudes_sum)),
              stft_feature.magnitudes_sum, linewidth=0.2)
@@ -84,10 +88,13 @@ def save_beat_state_plot(sample: Sample,
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
     plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1)
 
-    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State Index")
+    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index")
 
 
 def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> DataFrame:
+    if LOG:
+        print("Extracting beat data frame")
+
     beat_data_frame = {}
 
     def get_difference(target_array, start, end):
@@ -138,6 +145,9 @@ def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, 
 
 
 def extract_beat_type(sample: Sample, beat_state: list[str]) -> list[tuple[int, int, str]]:
+    if LOG:
+        print("Extracting " + sample.name + " beat type")
+
     error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
 
     beat_type = []
@@ -202,9 +212,13 @@ class BeatStateExtractor:
         self.label_encoder.fit([BeatState.START.value, BeatState.MIDDLE.value, BeatState.NONE.value])
 
     def save(self, directory_name: str, beat_extractor_name: str):
+        if LOG:
+            print("Saving " + beat_extractor_name)
         self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
     def load(self, directory_name: str, beat_extractor_name: str):
+        if LOG:
+            print("Loading " + beat_extractor_name)
         self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
     def fit(self,
@@ -212,7 +226,7 @@ class BeatStateExtractor:
             beat_state: list[str],
             epochs: int = 2 ** 10,
             n_splits: int = 5,
-            batch_size: int = 2 ** 5) -> tuple[list[float], list[float], list[float], list[float]]:
+            batch_size: int = 2 ** 5) -> dict:
         beat_data = beat_data_frame.values
         beat_state = array(beat_state)
 
@@ -243,7 +257,7 @@ class BeatStateExtractor:
                                                       val_beat_state),
                                      epochs=epochs,
                                      batch_size=batch_size,
-                                     verbose=3,
+                                     verbose=2,
                                      callbacks=[EarlyStopping(monitor="val_loss",
                                                               patience=batch_size,
                                                               mode="min",
@@ -255,25 +269,29 @@ class BeatStateExtractor:
             loss += history.history['loss']
             val_loss += history.history['val_loss']
 
-        return accuracy, val_accuracy, loss, val_loss
+        history = {
+            "accuracy": accuracy,
+            "val_accuracy": val_accuracy,
+            "loss": loss,
+            "val_loss": val_loss
+        }
 
-    def extract_beat_state(self, beat_data_frame: DataFrame) -> list[str]:
+        return history
+
+    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame) -> list[str]:
+        if LOG:
+            print("Extracting " + sample.name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
         return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data), axis=1))
 
 
-def save_beat_extractor_history_plot(accuracy: list[float],
-                                     val_accuracy: list[float],
-                                     loss: list[float],
-                                     val_loss: list[float],
+def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
                                      plot_name: str):
-    plt.plot(accuracy, label="accuracy")
-    plt.plot(val_accuracy, label="val_accuracy")
-    plt.plot(loss, label="loss")
-    plt.plot(val_loss, label="val_loss")
+    for key in history.keys():
+        plt.plot(history[key], label=key)
     plt.legend()
     plt.ylim(0, 1)
     save_plot(directory_name, plot_name + ".beh", "Beat Extractor History")
