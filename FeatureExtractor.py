@@ -1,9 +1,9 @@
 import librosa.feature
 import matplotlib.pyplot as plt
-from numpy import ndarray, array, linspace, clip
+from numpy import ndarray, array, clip
 from scipy.signal import find_peaks
 from Sample import Sample
-from LoadSave import save_plot, REACTIVE_FIG_SIZE_RATIO
+from Public import save_plot, set_tick
 
 
 class STFTFeature:
@@ -22,25 +22,6 @@ class WaveFeature:
         self.amplitudes_peaks = amplitudes_peaks
 
 
-def save_spectrum_plot(sample: Sample,
-                       spectrum,
-                       y_axis: str,
-                       directory_name: str,
-                       plot_name: str,
-                       plot_title: str,
-                       log: bool = False):
-    plt.figure(figsize=(spectrum.shape[1] / REACTIVE_FIG_SIZE_RATIO, 5))
-    librosa.display.specshow(spectrum,
-                             sr=sample.sampling_rate,
-                             win_length=sample.win_length,
-                             hop_length=sample.hop_length,
-                             n_fft=sample.n_fft,
-                             y_axis=y_axis,
-                             x_axis='time')
-    plt.colorbar(format='%2.0f dB')
-    save_plot(directory_name, plot_name, plot_title, log=log)
-
-
 # 샘플 파형을 start 에서 end 까지 분석
 def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
     if log:
@@ -57,23 +38,30 @@ def save_wave_feature_plot(sample: Sample,
                            directory_name: str,
                            plot_name: str,
                            log: bool = False):
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 10))
+    fig.suptitle(sample.name + " Wave Feature")
 
-    plt.figure(figsize=(len(wave_feature.amplitudes) / REACTIVE_FIG_SIZE_RATIO, 5))
-    plt.plot(wave_feature.amplitudes, linewidth=0.05)
-    save_plot(directory_name,
-              plot_name + ".wfa",
-              sample.name + " Wave Feature: Amplitudes",
-              log=log)
+    amplitudes_ax = plt.subplot(211)
+    amplitudes_ax.set_title("Amplitudes")
+    amplitudes_ax.plot(wave_feature.amplitudes, linewidth=0.05)
+    set_tick(amplitudes_ax,
+             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 4),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
 
-    plt.figure(figsize=(len(wave_feature.amplitudes_peaks) / REACTIVE_FIG_SIZE_RATIO, 5))
-    plt.plot(wave_feature.amplitudes_peaks,
-             sample.amplitudes[wave_feature.amplitudes_peaks], linewidth=0.05)
-    plt.scatter(wave_feature.amplitudes_peaks,
-                sample.amplitudes[wave_feature.amplitudes_peaks], s=0.05)
-    save_plot(directory_name,
-              plot_name + ".wfap",
-              sample.name + "Wave Feature: Amplitudes Peaks",
-              log=log)
+    amplitudes_peaks_ax = fig.add_subplot(212)
+    amplitudes_peaks_ax.set_title("Amplitudes Peaks")
+    amplitudes_peaks_ax.plot(wave_feature.amplitudes_peaks,
+                             sample.amplitudes[wave_feature.amplitudes_peaks],
+                             linewidth=0.05)
+    amplitudes_peaks_ax.scatter(wave_feature.amplitudes_peaks,
+                                sample.amplitudes[wave_feature.amplitudes_peaks],
+                                s=0.1)
+    set_tick(amplitudes_peaks_ax,
+             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 4),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
+
+    fig.tight_layout()
+    save_plot(directory_name, plot_name + ".wf", fig, log=log)
 
 
 # 샘플 주파수를 start 부터 end 까지 분석
@@ -111,29 +99,41 @@ def save_stft_feature_plot(sample: Sample,
                            directory_name: str,
                            plot_name: str,
                            log: bool = False):
-    save_spectrum_plot(sample,
-                       stft_feature.magnitudes_db,
-                       'log',
-                       directory_name,
-                       plot_name + ".sfl",
-                       sample.name + " STFT Feature: Magnitudes dB",
-                       log=log)
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 15))
+    fig.suptitle(sample.name + " STFT Feature")
 
-    save_spectrum_plot(sample,
-                       stft_feature.magnitudes_mel_db,
-                       'mel',
-                       directory_name,
-                       sample.name + ".sfm",
-                       sample.name + " STFT Feature: Magnitudes Mel dB",
-                       log=log)
+    magnitudes_db_ax = fig.add_subplot(311)
+    magnitudes_db_ax.set_title("Magnitudes dB")
+    librosa.display.specshow(stft_feature.magnitudes_db,
+                             sr=sample.sampling_rate,
+                             win_length=sample.win_length,
+                             hop_length=sample.hop_length,
+                             n_fft=sample.n_fft,
+                             y_axis="log",
+                             ax=magnitudes_db_ax)
+    set_tick(magnitudes_db_ax,
+             (0, stft_feature.magnitudes_db.shape[1], 5),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
 
-    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
-    plt.plot(linspace(start=0,
-                      stop=sample.duration,
-                      num=len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.5)
+    magnitudes_mel_db_ax = fig.add_subplot(312)
+    magnitudes_mel_db_ax.set_title("Magnitudes Mel dB")
+    librosa.display.specshow(stft_feature.magnitudes_mel_db,
+                             sr=sample.sampling_rate,
+                             win_length=sample.win_length,
+                             hop_length=sample.hop_length,
+                             n_fft=sample.n_fft,
+                             y_axis="mel",
+                             ax=magnitudes_mel_db_ax)
+    set_tick(magnitudes_mel_db_ax,
+             (0, stft_feature.magnitudes_mel_db.shape[1], 5),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
 
-    save_plot(directory_name,
-              plot_name + ".sfs",
-              sample.name + " STFT Feature: Magnitudes Sum",
-              log=log)
+    magnitudes_sum_ax = fig.add_subplot(313)
+    magnitudes_sum_ax.set_title("Magnitudes Sum")
+    plt.plot(stft_feature.magnitudes_sum, linewidth=0.5)
+    set_tick(magnitudes_sum_ax,
+             (0, len(stft_feature.magnitudes_sum), 5),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
+
+    fig.tight_layout()
+    save_plot(directory_name, plot_name + ".sf", fig, log=log)

@@ -4,14 +4,14 @@ from keras import Sequential
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
 from keras.utils import to_categorical
 from matplotlib import pyplot as plt
-from numpy import argmax, array, linspace
+from numpy import argmax, array
 from pandas import DataFrame
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 from FeatureExtractor import STFTFeature
-from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame, REACTIVE_FIG_SIZE_RATIO
+from Public import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame, set_tick
 from Sample import Sample
 
 START = "start"
@@ -81,27 +81,19 @@ def save_beat_state_plot(sample: Sample,
                          directory_name: str,
                          plot_name: str,
                          log: bool = False):
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 5))
+    fig.suptitle(sample.name + " Beat State")
 
-    args = linspace(start=0,
-                    stop=sample.duration,
-                    num=len(stft_feature.magnitudes_sum))
-
-    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
-    plt.plot(args, stft_feature.magnitudes_sum, linewidth=0.25)
-
+    beat_state_ax = fig.add_subplot(111)
+    plt.plot(stft_feature.magnitudes_sum, linewidth=0.5)
     for index, value in enumerate(stft_feature.magnitudes_sum):
-        plt.scatter(args[index], value, s=1.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+        plt.scatter(index, value, s=1.5, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+    set_tick(beat_state_ax,
+             (0, len(stft_feature.magnitudes_sum), 5),
+             (0, sample.duration, 1 / sample.beat_per_second / 4))
 
-    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log=log)
-
-    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
-    plt.plot(stft_feature.magnitudes_sum, linewidth=0.25)
-
-    for index, value in enumerate(stft_feature.magnitudes_sum):
-        plt.scatter(index, value, s=1.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
-    plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1.25)
-
-    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index", log=log)
+    fig.tight_layout()
+    save_plot(directory_name, plot_name + ".bs", fig, log=log)
 
 
 def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
@@ -163,7 +155,7 @@ def extract_beat(sample: Sample,
     if log:
         print("Extracting " + sample.name + " beat type")
 
-    error_range = 1 / sample.beat_per_second / 2 / 3 ** sample.beat_per_second
+    error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
 
     beat = []
 
@@ -312,9 +304,14 @@ def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
                                      plot_name: str,
                                      log: bool = False):
-    plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / REACTIVE_FIG_SIZE_RATIO, 5))
+    fig = plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, 5))
+    fig.suptitle("Beat Extractor History")
+
+    history_ax = fig.add_subplot(111)
+
     for key in history.keys():
-        plt.plot(history[key], label=key)
-    plt.legend()
-    plt.ylim(0, 1)
-    save_plot(directory_name, plot_name + ".beh", "Beat Extractor History", log=log)
+        history_ax.plot(history[key], label=key, linewidth=0.25)
+
+    history_ax.legend()
+    history_ax.set_ylim(0, 1)
+    save_plot(directory_name, plot_name + ".beh", fig, log=log)

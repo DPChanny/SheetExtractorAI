@@ -1,6 +1,6 @@
 import sys
 
-from LoadSave import SOURCE
+from Public import SOURCE
 from librosa import load, get_duration
 
 
