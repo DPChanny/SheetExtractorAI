@@ -1,6 +1,6 @@
 from pandas import DataFrame, concat
 from FeatureExtractor import extract_stft_feature, save_stft_feature_plot
-from BeatExtractor import BeatStateExtractor, extract_beat_type, save_beat_data_frame, save_beat_extractor_history_plot
+from BeatExtractor import BeatStateExtractor, extract_beat, save_beat_data_frame, save_beat_extractor_history_plot
 from BeatExtractor import load_beat_state_data_frame, save_beat_state_plot
 from BeatExtractor import extract_beat_data_frame, extract_beat_state
 from Sample import Sample
@@ -126,6 +126,6 @@ for sample in samples:
                              sample.name,
                              log=LOG)
 
-    beat_type = extract_beat_type(sample, beat_state, log=LOG)
+    beat_type = extract_beat(sample, beat_state, log=LOG)
 
     print(len(beat_type), beat_type)
