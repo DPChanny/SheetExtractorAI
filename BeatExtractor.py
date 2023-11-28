@@ -288,7 +288,9 @@ class BeatStateExtractor:
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
-        return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data), axis=1))
+        return self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data,
+                                                                              verbose=2 if log else 0),
+                                                           axis=1))
 
 
 def save_beat_extractor_history_plot(history: dict,
