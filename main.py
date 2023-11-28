@@ -89,15 +89,16 @@ if TRAIN_BEAT_EXTRACTOR:
     if PLOT_HISTORY:
         save_beat_extractor_history_plot(history,
                                          "beat_extractor",
-                                         BEAT_EXTRACTOR_NAME)
+                                         BEAT_EXTRACTOR_NAME,
+                                         log=LOG)
 
-    beat_state_extractor.save("beat_extractor", BEAT_EXTRACTOR_NAME)
+    beat_state_extractor.save("beat_extractor", BEAT_EXTRACTOR_NAME, log=LOG)
 
 if not TRAIN_BEAT_EXTRACTOR:
-    beat_state_extractor.load("beat_extractor", BEAT_EXTRACTOR_NAME)
+    beat_state_extractor.load("beat_extractor", BEAT_EXTRACTOR_NAME, log=LOG)
 
 for sample in samples:
-    sample_stft_feature = extract_stft_feature(sample, LOG)
+    sample_stft_feature = extract_stft_feature(sample, log=LOG)
     if PLOT_STFT_FEATURE:
         save_stft_feature_plot(sample,
                                sample_stft_feature,
