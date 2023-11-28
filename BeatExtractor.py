@@ -96,7 +96,7 @@ def save_beat_state_plot(sample: Sample,
     save_plot(directory_name, plot_name + ".bs", fig, log=log)
 
 
-def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
+def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 4, log: bool = False) -> DataFrame:
     if log:
         print("Extracting beat data frame")
 
@@ -206,7 +206,7 @@ def extract_beat(sample: Sample,
 
 
 class BeatStateExtractor:
-    def __init__(self, wing_length: int = 5):
+    def __init__(self, wing_length: int = 4):
         self.wing_length = wing_length
         self.model = Sequential()
         self.model.add(Bidirectional(LSTM(units=self.wing_length * 2 + 1,
@@ -233,7 +233,7 @@ class BeatStateExtractor:
             beat_state: list[BeatState],
             epochs: int = 1024,
             n_splits: int = 5,
-            batch_size: int = 64,
+            batch_size: int = 32,
             patience: int = 32,
             log: bool = False) -> dict:
         beat_data = beat_data_frame.values
