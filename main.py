@@ -7,19 +7,6 @@ from Sample import Sample
 
 LOG = False
 
-samples = [Sample("marimba_60", 60, log=LOG),
-           Sample("marimba_60_1by4", 60, log=LOG),
-           Sample("marimba_60_1by8", 60, log=LOG),
-           Sample("marimba_120_1by4", 120, log=LOG),
-           Sample("marimba_120_1by8", 120, log=LOG),
-           Sample("piano_60_1by4", 60, log=LOG),
-           Sample("piano_60_1by8", 60, log=LOG),
-           Sample("piano_120_1by4", 120, log=LOG),
-           Sample("piano_120_1by8", 120, log=LOG)]
-
-train_samples = [Sample("marimba_60", 60, log=LOG),
-                 Sample("marimba_60_1by4", 60, log=LOG)]
-
 WING_LENGTH = 5
 
 BEAT_EXTRACTOR_NAME = "beat_extractor_0_0"
@@ -37,6 +24,19 @@ PLOT_STFT_FEATURE = True
 PLOT_TRAIN_BEAT_STATUS = True
 PLOT_BEAT_STATUS = True
 PLOT_HISTORY = True
+
+samples = [Sample("marimba_60", 60, log=LOG),
+           Sample("marimba_60_1by4", 60, log=LOG),
+           Sample("marimba_60_1by8", 60, log=LOG),
+           Sample("marimba_120_1by4", 120, log=LOG),
+           Sample("marimba_120_1by8", 120, log=LOG),
+           Sample("piano_60_1by4", 60, log=LOG),
+           Sample("piano_60_1by8", 60, log=LOG),
+           Sample("piano_120_1by4", 120, log=LOG),
+           Sample("piano_120_1by8", 120, log=LOG)]
+
+train_samples = [Sample("marimba_60", 60, log=LOG),
+                 Sample("marimba_60_1by4", 60, log=LOG)]
 
 beat_state_extractor = BeatStateExtractor(WING_LENGTH)
 
@@ -65,7 +65,8 @@ if TRAIN_BEAT_EXTRACTOR:
         train_beat_state = extract_beat_state(train_sample,
                                               train_sample_stft_feature,
                                               load_beat_state_data_frame(train_sample.name,
-                                                                         train_sample.name),
+                                                                         train_sample.name,
+                                                                         log=LOG),
                                               log=LOG)
         if PLOT_TRAIN_BEAT_STATUS:
             save_beat_state_plot(train_sample,

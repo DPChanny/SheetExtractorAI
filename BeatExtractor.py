@@ -58,8 +58,8 @@ def extract_beat_state(sample: Sample,
     return beat_state
 
 
-def load_beat_state_data_frame(directory_name: str, data_frame_name: str):
-    return load_data_frame(directory_name, data_frame_name + ".bsdf")
+def load_beat_state_data_frame(directory_name: str, data_frame_name: str, log: bool = False):
+    return load_data_frame(directory_name, data_frame_name + ".bsdf", log=log)
 
 
 def save_beat_state_plot(sample: Sample,
@@ -79,7 +79,7 @@ def save_beat_state_plot(sample: Sample,
                     stft_feature.magnitudes_sum[index],
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
 
-    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log)
+    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log=log)
 
     plt.plot(range(len(stft_feature.magnitudes_sum)),
              stft_feature.magnitudes_sum, linewidth=0.2)
@@ -90,7 +90,7 @@ def save_beat_state_plot(sample: Sample,
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
     plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1)
 
-    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index", log)
+    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index", log=log)
 
 
 def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
@@ -129,7 +129,7 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log
 
 
 def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, data_frame_name: str, log: bool = False):
-    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame, log)
+    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame, log=log)
 
 
 def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
@@ -293,9 +293,10 @@ class BeatStateExtractor:
 
 def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
-                                     plot_name: str):
+                                     plot_name: str,
+                                     log: bool = False):
     for key in history.keys():
         plt.plot(history[key], label=key)
     plt.legend()
     plt.ylim(0, 1)
-    save_plot(directory_name, plot_name + ".beh", "Beat Extractor History")
+    save_plot(directory_name, plot_name + ".beh", "Beat Extractor History", log=log)

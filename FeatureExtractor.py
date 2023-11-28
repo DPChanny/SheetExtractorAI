@@ -37,7 +37,7 @@ def save_spectrum_plot(sample: Sample,
                              y_axis=y_axis,
                              x_axis='time')
     plt.colorbar(format='%2.0f dB')
-    save_plot(directory_name, plot_name, plot_title, log)
+    save_plot(directory_name, plot_name, plot_title, log=log)
 
 
 # 샘플 파형을 start 에서 end 까지 분석
@@ -54,11 +54,13 @@ def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
 def save_wave_feature_plot(sample: Sample,
                            wave_feature: WaveFeature,
                            directory_name: str,
-                           plot_name: str):
+                           plot_name: str,
+                           log: bool = False):
     plt.plot(wave_feature.amplitudes, linewidth=0.05)
     save_plot(directory_name,
               plot_name + ".wfa",
-              sample.name + " Wave Feature: Amplitudes")
+              sample.name + " Wave Feature: Amplitudes",
+              log=log)
 
     plt.plot(wave_feature.amplitudes_peaks,
              sample.amplitudes[wave_feature.amplitudes_peaks], linewidth=0.05)
@@ -66,7 +68,8 @@ def save_wave_feature_plot(sample: Sample,
                 sample.amplitudes[wave_feature.amplitudes_peaks], s=0.05)
     save_plot(directory_name,
               plot_name + ".wfap",
-              sample.name + "Wave Feature: Amplitudes Peaks")
+              sample.name + "Wave Feature: Amplitudes Peaks",
+              log=log)
 
 
 # 샘플 주파수를 start 부터 end 까지 분석
@@ -110,7 +113,7 @@ def save_stft_feature_plot(sample: Sample,
                        directory_name,
                        plot_name + ".sfl",
                        sample.name + " STFT Feature: Magnitudes dB",
-                       log)
+                       log=log)
 
     save_spectrum_plot(sample,
                        stft_feature.magnitudes_mel_db,
@@ -118,7 +121,7 @@ def save_stft_feature_plot(sample: Sample,
                        directory_name,
                        sample.name + ".sfm",
                        sample.name + " STFT Feature: Magnitudes Mel dB",
-                       log)
+                       log=log)
 
     plt.plot(linspace(start=0,
                       stop=sample.duration * len(sample.amplitudes) / len(sample.amplitudes),
@@ -128,4 +131,4 @@ def save_stft_feature_plot(sample: Sample,
     save_plot(directory_name,
               plot_name + ".sfs",
               sample.name + " STFT Feature: Magnitudes Sum",
-              log)
+              log=log)
