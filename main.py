@@ -12,9 +12,10 @@ WING_LENGTH = 5
 BEAT_EXTRACTOR_NAME = "beat_extractor_0"
 TRAIN_BEAT_EXTRACTOR = True
 
-EPOCHS = 2 ** 10
+EPOCHS = 1024
 N_SPLITS = 5
-BATCH_SIZE = 2 ** 5
+BATCH_SIZE = 64
+PATIENCE = 32
 
 SAVE_TRAIN_BEAT_DATA_FRAME = True
 SAVE_BEAT_DATA_FRAME = True
@@ -84,6 +85,7 @@ if TRAIN_BEAT_EXTRACTOR:
                                        epochs=EPOCHS,
                                        n_splits=N_SPLITS,
                                        batch_size=BATCH_SIZE,
+                                       patience=PATIENCE,
                                        log=LOG)
 
     if PLOT_HISTORY:

@@ -155,7 +155,7 @@ def extract_beat(sample: Sample,
     if log:
         print("Extracting " + sample.name + " beat type")
 
-    error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
+    error_range = 1 / sample.beat_per_second / 2 / 5
 
     beat = []
 
@@ -175,7 +175,7 @@ def extract_beat(sample: Sample,
             if last_beat_state == BeatState.NONE:
                 duration = (index - last_beat_none_index) / len(beat_state) * sample.duration
                 beat_type, beat_type_duration = extract_beat_type(duration, sample)
-                if abs(beat_type_duration - duration) < error_range:
+                if abs(beat_type_duration - duration) < error_range * 2:
                     beat.append(Beat(beat_type, last_beat_none_index, index, False))
                 last_beat_state = state
                 last_beat_start_index = index
@@ -183,7 +183,7 @@ def extract_beat(sample: Sample,
             if last_beat_state == BeatState.MIDDLE:
                 duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
                 beat_type, beat_type_duration = extract_beat_type(duration, sample)
-                if abs(beat_type_duration - duration) < error_range:
+                if abs(beat_type_duration - duration) < error_range * 2:
                     beat.append(Beat(beat_type, last_beat_start_index, index, True))
                     last_beat_state = state
                     last_beat_none_index = index
@@ -199,7 +199,7 @@ def extract_beat(sample: Sample,
     if last_beat_state == BeatState.NONE:
         duration = (len(beat_state) - last_beat_none_index) / len(beat_state) * sample.duration
         beat_type, beat_type_duration = extract_beat_type(duration, sample)
-        if abs(beat_type_duration - duration) < error_range:
+        if abs(beat_type_duration - duration) < error_range * 2:
             beat.append(Beat(beat_type, last_beat_none_index, len(beat_state), False))
 
     return beat
@@ -231,9 +231,10 @@ class BeatStateExtractor:
     def fit(self,
             beat_data_frame: DataFrame,
             beat_state: list[BeatState],
-            epochs: int = 2 ** 10,
+            epochs: int = 1024,
             n_splits: int = 5,
-            batch_size: int = 2 ** 5,
+            batch_size: int = 64,
+            patience: int = 32,
             log: bool = False) -> dict:
         beat_data = beat_data_frame.values
         beat_state = array([_.value for _ in beat_state])
@@ -268,7 +269,7 @@ class BeatStateExtractor:
                                      batch_size=batch_size,
                                      verbose=2 if log else 0,
                                      callbacks=[EarlyStopping(monitor="val_loss",
-                                                              patience=batch_size,
+                                                              patience=patience,
                                                               mode="min",
                                                               restore_best_weights=True,
                                                               verbose=1 if log else 0)])
