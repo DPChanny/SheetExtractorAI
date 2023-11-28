@@ -8,6 +8,9 @@ from pandas import DataFrame, read_csv
 SOURCE = "source"
 RESULT = "result"
 
+FIG_WIDTH_MULTIPLIER = 1.5
+FIG_HEIGHT = 5
+
 
 def set_tick(ax: Axes, index_tick, time_tick):
     ax_twin = ax.twiny()

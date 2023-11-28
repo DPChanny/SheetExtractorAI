@@ -1,17 +1,18 @@
 from enum import Enum
 
+from pandas import DataFrame
 from keras import Sequential
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
 from keras.utils import to_categorical
 from matplotlib import pyplot as plt
 from numpy import argmax, array
-from pandas import DataFrame
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 from FeatureExtractor import STFTFeature
-from Public import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame, set_tick
+from Public import load_data_frame, save_plot, set_tick
+from Public import RESULT, SOURCE, save_data_frame, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT
 from Sample import Sample
 
 START = "start"
@@ -81,7 +82,7 @@ def save_beat_state_plot(sample: Sample,
                          directory_name: str,
                          plot_name: str,
                          log: bool = False):
-    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 5))
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT))
     fig.suptitle(sample.name + " Beat State")
 
     beat_state_ax = fig.add_subplot(111)
@@ -305,7 +306,7 @@ def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
                                      plot_name: str,
                                      log: bool = False):
-    fig = plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, 5))
+    fig = plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, FIG_HEIGHT))
     fig.suptitle("Beat Extractor History")
 
     history_ax = fig.add_subplot(111)

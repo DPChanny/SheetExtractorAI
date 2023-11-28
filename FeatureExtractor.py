@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from numpy import ndarray, array, clip
 from scipy.signal import find_peaks
 from Sample import Sample
-from Public import save_plot, set_tick
+from Public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT
 
 
 class STFTFeature:
@@ -38,14 +38,14 @@ def save_wave_feature_plot(sample: Sample,
                            directory_name: str,
                            plot_name: str,
                            log: bool = False):
-    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 10))
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT * 2))
     fig.suptitle(sample.name + " Wave Feature")
 
     amplitudes_ax = fig.add_subplot(211)
     amplitudes_ax.set_title("Amplitudes")
     amplitudes_ax.plot(wave_feature.amplitudes, linewidth=0.05)
     set_tick(amplitudes_ax,
-             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 4),
+             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 8),
              (0, sample.duration, 1 / sample.beat_per_second / 4))
 
     amplitudes_peaks_ax = fig.add_subplot(212)
@@ -57,7 +57,7 @@ def save_wave_feature_plot(sample: Sample,
                                 sample.amplitudes[wave_feature.amplitudes_peaks],
                                 s=0.1)
     set_tick(amplitudes_peaks_ax,
-             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 4),
+             (0, len(wave_feature.amplitudes), sample.sampling_rate / sample.beat_per_second / 8),
              (0, sample.duration, 1 / sample.beat_per_second / 4))
 
     fig.tight_layout()
@@ -99,7 +99,7 @@ def save_stft_feature_plot(sample: Sample,
                            directory_name: str,
                            plot_name: str,
                            log: bool = False):
-    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 15))
+    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT * 3))
     fig.suptitle(sample.name + " STFT Feature")
 
     magnitudes_db_ax = fig.add_subplot(311)
