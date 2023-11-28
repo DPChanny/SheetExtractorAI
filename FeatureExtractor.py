@@ -124,7 +124,7 @@ def save_stft_feature_plot(sample: Sample,
                        log=log)
 
     plt.plot(linspace(start=0,
-                      stop=sample.duration * len(sample.amplitudes) / len(sample.amplitudes),
+                      stop=sample.duration,
                       num=len(stft_feature.magnitudes_sum)),
              stft_feature.magnitudes_sum, linewidth=0.5)
 

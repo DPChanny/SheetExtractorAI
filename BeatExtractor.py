@@ -44,10 +44,9 @@ class Beat:
         self.note = note
 
     def __str__(self):
-        return ("beat type: " + self.beat_type.value +
-                " start: " + str(self.start) +
-                " end: " + str(self.end) +
-                " note: " + str(self.note))
+        return (self.beat_type.value +
+                ("_note" if self.note else "_rest") +
+                str((self.start, self.end)))
 
 
 BeatStatusColor = {
@@ -83,26 +82,25 @@ def save_beat_state_plot(sample: Sample,
                          plot_name: str,
                          log: bool = False):
 
-    plt.plot(linspace(start=0,
-                      stop=sample.duration,
-                      num=len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.2)
+    args = linspace(start=0,
+                    stop=sample.duration,
+                    num=len(stft_feature.magnitudes_sum))
 
-    for index in range(len(stft_feature.magnitudes_sum)):
-        plt.scatter(sample.duration * index / len(beat_state),
-                    stft_feature.magnitudes_sum[index],
-                    s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+    plt.figure(figsize=(20, 5))
+    plt.plot(args, stft_feature.magnitudes_sum, linewidth=0.25)
+
+    for index, value in enumerate(stft_feature.magnitudes_sum):
+        plt.scatter(args[index], value, s=1.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
 
     save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log=log)
 
+    plt.figure(figsize=(20, 5))
     plt.plot(range(len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.2)
+             stft_feature.magnitudes_sum, linewidth=0.25)
 
-    for index in range(len(stft_feature.magnitudes_sum)):
-        plt.scatter(index,
-                    stft_feature.magnitudes_sum[index],
-                    s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
-    plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1)
+    for index, value in enumerate(stft_feature.magnitudes_sum):
+        plt.scatter(index, value, s=1.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
+    plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1.25)
 
     save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index", log=log)
 
@@ -166,7 +164,7 @@ def extract_beat(sample: Sample,
     if log:
         print("Extracting " + sample.name + " beat type")
 
-    error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
+    error_range = 1 / sample.beat_per_second / 2 / 3 ** sample.beat_per_second
 
     beat = []
 
