@@ -126,6 +126,6 @@ for sample in samples:
                              sample.name,
                              log=LOG)
 
-    beat_type = extract_beat(sample, beat_state, log=LOG)
+    beat = extract_beat(sample, beat_state, log=LOG)
 
-    print(len(beat_type), beat_type)
+    print(len(beat), [str(_) for _ in beat])

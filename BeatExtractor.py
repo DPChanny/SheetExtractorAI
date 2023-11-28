@@ -43,6 +43,12 @@ class Beat:
         self.end = end
         self.note = note
 
+    def __str__(self):
+        return ("beat type: " + self.beat_type.value +
+                " start: " + str(self.start) +
+                " end: " + str(self.end) +
+                " note: " + str(self.note))
+
 
 BeatStatusColor = {
     BeatState.START: "green",
@@ -156,7 +162,7 @@ def extract_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]
 
 def extract_beat(sample: Sample,
                  beat_state: list[BeatState],
-                 log: bool = False) -> Beat:
+                 log: bool = False) -> list[Beat]:
     if log:
         print("Extracting " + sample.name + " beat type")
 
@@ -241,7 +247,7 @@ class BeatStateExtractor:
             batch_size: int = 2 ** 5,
             log: bool = False) -> dict:
         beat_data = beat_data_frame.values
-        beat_state = array([state.value for state in beat_state])
+        beat_state = array([_.value for _ in beat_state])
 
         accuracy = []
         val_accuracy = []
@@ -302,7 +308,7 @@ class BeatStateExtractor:
                                                                                     verbose=2 if log else 0),
                                                                  axis=1))
 
-        return [BeatState(value) for value in beat_state]
+        return [BeatState(_) for _ in beat_state]
 
 
 def save_beat_extractor_history_plot(history: dict,
