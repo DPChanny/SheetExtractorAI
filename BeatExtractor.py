@@ -311,7 +311,7 @@ def save_beat_extractor_history_plot(history: dict,
     history_ax = fig.add_subplot(111)
 
     for key in history.keys():
-        history_ax.plot(history[key], label=key, linewidth=0.25)
+        history_ax.plot(history[key], label=key, linewidth=0.5)
 
     history_ax.legend()
     history_ax.set_ylim(0, 1)

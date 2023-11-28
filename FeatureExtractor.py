@@ -41,7 +41,7 @@ def save_wave_feature_plot(sample: Sample,
     fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * 2, 10))
     fig.suptitle(sample.name + " Wave Feature")
 
-    amplitudes_ax = plt.subplot(211)
+    amplitudes_ax = fig.add_subplot(211)
     amplitudes_ax.set_title("Amplitudes")
     amplitudes_ax.plot(wave_feature.amplitudes, linewidth=0.05)
     set_tick(amplitudes_ax,
