@@ -14,8 +14,6 @@ from FeatureExtractor import STFTFeature
 from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
 from Sample import Sample
 
-LOG = True
-
 START = "start"
 END = "end"
 LEFT = "left_"
@@ -45,8 +43,11 @@ BeatStatusColor = {
 }
 
 
-def extract_beat_state(sample: Sample, stft_feature: STFTFeature, beat_state_data_frame: DataFrame) -> list[str]:
-    if LOG:
+def extract_beat_state(sample: Sample,
+                       stft_feature: STFTFeature,
+                       beat_state_data_frame: DataFrame,
+                       log: bool = False) -> list[str]:
+    if log:
         print("Extracting " + sample.name + " beat state")
     beat_state = [str(BeatState.NONE.value) for _ in range(len(stft_feature.magnitudes_sum))]
 
@@ -65,7 +66,8 @@ def save_beat_state_plot(sample: Sample,
                          stft_feature: STFTFeature,
                          beat_state,
                          directory_name: str,
-                         plot_name: str):
+                         plot_name: str,
+                         log: bool = False):
 
     plt.plot(linspace(start=0,
                       stop=sample.duration,
@@ -77,7 +79,7 @@ def save_beat_state_plot(sample: Sample,
                     stft_feature.magnitudes_sum[index],
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
 
-    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time")
+    save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log)
 
     plt.plot(range(len(stft_feature.magnitudes_sum)),
              stft_feature.magnitudes_sum, linewidth=0.2)
@@ -88,11 +90,11 @@ def save_beat_state_plot(sample: Sample,
                     s=0.3, edgecolors="none", c=BeatStatusColor[beat_state[index]])
     plt.xticks(range(0, len(stft_feature.magnitudes_sum), 5), size=1)
 
-    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index")
+    save_plot(directory_name, plot_name + ".bsi", sample.name + " Beat State: Index", log)
 
 
-def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> DataFrame:
-    if LOG:
+def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
+    if log:
         print("Extracting beat data frame")
 
     beat_data_frame = {}
@@ -126,8 +128,8 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5) -> 
     return beat_data_frame
 
 
-def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, data_frame_name: str):
-    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame)
+def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, data_frame_name: str, log: bool = False):
+    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame, log)
 
 
 def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
@@ -144,8 +146,8 @@ def get_min_error_beat_type(duration: float, sample: Sample) -> tuple[BeatType, 
     return min_error_beat_type, min_error_beat_type_duration
 
 
-def extract_beat_type(sample: Sample, beat_state: list[str]) -> list[tuple[int, int, str]]:
-    if LOG:
+def extract_beat_type(sample: Sample, beat_state: list[str], log: bool = False) -> list[tuple[int, int, str]]:
+    if log:
         print("Extracting " + sample.name + " beat type")
 
     error_range = 1 / sample.beat_per_second / 2 / 2 ** sample.beat_per_second
@@ -211,13 +213,13 @@ class BeatStateExtractor:
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit([BeatState.START.value, BeatState.MIDDLE.value, BeatState.NONE.value])
 
-    def save(self, directory_name: str, beat_extractor_name: str):
-        if LOG:
+    def save(self, directory_name: str, beat_extractor_name: str, log: bool = False):
+        if log:
             print("Saving " + beat_extractor_name)
         self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
-    def load(self, directory_name: str, beat_extractor_name: str):
-        if LOG:
+    def load(self, directory_name: str, beat_extractor_name: str, log: bool = False):
+        if log:
             print("Loading " + beat_extractor_name)
         self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + beat_extractor_name + "/model")
 
@@ -226,7 +228,8 @@ class BeatStateExtractor:
             beat_state: list[str],
             epochs: int = 2 ** 10,
             n_splits: int = 5,
-            batch_size: int = 2 ** 5) -> dict:
+            batch_size: int = 2 ** 5,
+            log: bool = False) -> dict:
         beat_data = beat_data_frame.values
         beat_state = array(beat_state)
 
@@ -238,7 +241,8 @@ class BeatStateExtractor:
         for index, (train, val) in enumerate(StratifiedKFold(n_splits=n_splits,
                                                              shuffle=True).split(beat_data,
                                                                                  beat_state)):
-            print("Stratified K Fold: " + str(index + 1))
+            if log:
+                print("Stratified K Fold: " + str(index + 1))
 
             train_beat_data, val_beat_data = beat_data[train], beat_data[val]
             train_beat_state, val_beat_state = beat_state[train], beat_state[val]
@@ -257,12 +261,12 @@ class BeatStateExtractor:
                                                       val_beat_state),
                                      epochs=epochs,
                                      batch_size=batch_size,
-                                     verbose=2,
+                                     verbose=2 if log else 0,
                                      callbacks=[EarlyStopping(monitor="val_loss",
                                                               patience=batch_size,
                                                               mode="min",
                                                               restore_best_weights=True,
-                                                              verbose=1)])
+                                                              verbose=1 if log else 0)])
 
             accuracy += history.history['accuracy']
             val_accuracy += history.history['val_accuracy']
@@ -278,8 +282,8 @@ class BeatStateExtractor:
 
         return history
 
-    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame) -> list[str]:
-        if LOG:
+    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[str]:
+        if log:
             print("Extracting " + sample.name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
