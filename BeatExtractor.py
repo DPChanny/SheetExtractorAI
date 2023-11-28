@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 from FeatureExtractor import STFTFeature
-from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame
+from LoadSave import load_data_frame, save_plot, RESULT, SOURCE, save_data_frame, REACTIVE_FIG_SIZE_RATIO
 from Sample import Sample
 
 START = "start"
@@ -86,7 +86,7 @@ def save_beat_state_plot(sample: Sample,
                     stop=sample.duration,
                     num=len(stft_feature.magnitudes_sum))
 
-    plt.figure(figsize=(20, 5))
+    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
     plt.plot(args, stft_feature.magnitudes_sum, linewidth=0.25)
 
     for index, value in enumerate(stft_feature.magnitudes_sum):
@@ -94,9 +94,8 @@ def save_beat_state_plot(sample: Sample,
 
     save_plot(directory_name, plot_name + ".bst", sample.name + " Beat State: Time", log=log)
 
-    plt.figure(figsize=(20, 5))
-    plt.plot(range(len(stft_feature.magnitudes_sum)),
-             stft_feature.magnitudes_sum, linewidth=0.25)
+    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
+    plt.plot(stft_feature.magnitudes_sum, linewidth=0.25)
 
     for index, value in enumerate(stft_feature.magnitudes_sum):
         plt.scatter(index, value, s=1.25, edgecolors="none", c=BeatStatusColor[beat_state[index]])
@@ -313,6 +312,7 @@ def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
                                      plot_name: str,
                                      log: bool = False):
+    plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / REACTIVE_FIG_SIZE_RATIO, 5))
     for key in history.keys():
         plt.plot(history[key], label=key)
     plt.legend()

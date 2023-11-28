@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from numpy import ndarray, array, linspace, clip
 from scipy.signal import find_peaks
 from Sample import Sample
-from LoadSave import save_plot
+from LoadSave import save_plot, REACTIVE_FIG_SIZE_RATIO
 
 
 class STFTFeature:
@@ -29,6 +29,7 @@ def save_spectrum_plot(sample: Sample,
                        plot_name: str,
                        plot_title: str,
                        log: bool = False):
+    plt.figure(figsize=(spectrum.shape[1] / REACTIVE_FIG_SIZE_RATIO, 5))
     librosa.display.specshow(spectrum,
                              sr=sample.sampling_rate,
                              win_length=sample.win_length,
@@ -56,12 +57,15 @@ def save_wave_feature_plot(sample: Sample,
                            directory_name: str,
                            plot_name: str,
                            log: bool = False):
+
+    plt.figure(figsize=(len(wave_feature.amplitudes) / REACTIVE_FIG_SIZE_RATIO, 5))
     plt.plot(wave_feature.amplitudes, linewidth=0.05)
     save_plot(directory_name,
               plot_name + ".wfa",
               sample.name + " Wave Feature: Amplitudes",
               log=log)
 
+    plt.figure(figsize=(len(wave_feature.amplitudes_peaks) / REACTIVE_FIG_SIZE_RATIO, 5))
     plt.plot(wave_feature.amplitudes_peaks,
              sample.amplitudes[wave_feature.amplitudes_peaks], linewidth=0.05)
     plt.scatter(wave_feature.amplitudes_peaks,
@@ -123,6 +127,7 @@ def save_stft_feature_plot(sample: Sample,
                        sample.name + " STFT Feature: Magnitudes Mel dB",
                        log=log)
 
+    plt.figure(figsize=(len(stft_feature.magnitudes_sum) / REACTIVE_FIG_SIZE_RATIO, 5))
     plt.plot(linspace(start=0,
                       stop=sample.duration,
                       num=len(stft_feature.magnitudes_sum)),

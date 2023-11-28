@@ -5,6 +5,8 @@ from pandas import DataFrame, read_csv
 SOURCE = "source"
 RESULT = "result"
 
+REACTIVE_FIG_SIZE_RATIO = 50
+
 
 def save_plot(directory_name: str, plot_name: str, plot_title: str, log: bool = False):
     if log:
