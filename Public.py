@@ -18,13 +18,13 @@ def set_tick(ax: Axes, index_tick, time_tick):
     ax.set_xticks(arange(index_tick[0], index_tick[1], index_tick[2]))
     ax.set_xticklabels(arange(index_tick[0], index_tick[1], index_tick[2]), fontsize=5)
     ax.set_xlabel("Index")
-    ax.margins(0, tight=True)
+    ax.margins(x=0, y=0.05, tight=True)
     ax.tick_params(axis='x', labelrotation=45)
 
     ax_twin.set_xticks(arange(time_tick[0], time_tick[1], time_tick[2]))
     ax_twin.set_xticklabels(arange(time_tick[0], time_tick[1], time_tick[2]), fontsize=5)
     ax_twin.set_xlabel("Time")
-    ax_twin.margins(0, tight=True)
+    ax_twin.margins(x=0, y=0.05, tight=True)
     ax_twin.tick_params(axis='x', labelrotation=45)
 
 

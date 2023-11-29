@@ -7,7 +7,7 @@ from Sample import Sample
 
 LOG = True
 
-WING_LENGTH = 4
+WING_LENGTH = 5
 
 BEAT_EXTRACTOR_NAME = "beat_extractor_0"
 TRAIN_BEAT_EXTRACTOR = True
