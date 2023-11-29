@@ -1,5 +1,7 @@
 from os import makedirs
 from enum import Enum
+from os.path import join
+
 from matplotlib.pyplot import close
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -7,10 +9,26 @@ from numpy import arange, ndarray
 from pandas import DataFrame, read_csv
 
 
+START = "start"
+END = "end"
+LEFT = "left_"
+RIGHT = "right_"
+DIFFERENCE = "difference_"
+VALUE = "value"
+BEAT_STATE = "beat_state"
+
+
 class BeatState(Enum):
     START = "beat_state_start"
     MIDDLE = "beat_state_middle"
     NONE = "beat_state_none"
+
+
+BeatStateColor = {
+    BeatState.START: "green",
+    BeatState.MIDDLE: "blue",
+    BeatState.NONE: "red"
+}
 
 
 class BeatType(Enum):
@@ -72,22 +90,25 @@ def set_tick(ax: Axes, index_tick, time_tick):
     ax_twin.tick_params(axis='x', labelrotation=45)
 
 
-def save_plot(directory_name: str, plot_name: str, plot: Figure, log: bool = False):
+def save_plot(directory: list[str], plot_name: str, plot: Figure, log: bool = False):
+    directory = join(*directory)
     if log:
-        print("Saving " + plot_name + ".png")
-    makedirs("./" + RESULT + "/" + directory_name + "/", exist_ok=True)
-    plot.savefig("./" + RESULT + "/" + directory_name + "/" + plot_name + ".png", dpi=500)
+        print("Saving " + join(*[RESULT, directory, plot_name + ".png"]))
+    makedirs(join(*[RESULT, directory]), exist_ok=True)
+    plot.savefig(join(*[RESULT, directory, plot_name + ".png"]), dpi=500)
     close(plot)
 
 
-def save_data_frame(directory_name: str, data_frame_name: str, data_frame: DataFrame, log: bool = False):
+def save_data_frame(directory: list[str], data_frame_name: str, data_frame: DataFrame, log: bool = False):
+    directory = join(*directory)
     if log:
-        print("Saving " + data_frame_name + ".csv")
-    makedirs("./" + RESULT + "/" + directory_name + "/", exist_ok=True)
-    data_frame.to_csv("./" + RESULT + "/" + directory_name + "/" + data_frame_name + ".csv")
+        print("Saving " + join(*[RESULT, directory, data_frame_name + ".csv"]))
+    makedirs(join(*[RESULT, directory]), exist_ok=True)
+    data_frame.to_csv(join(*[RESULT, directory, data_frame_name + ".csv"]))
 
 
-def load_data_frame(directory_name: str, data_frame_name: str, log: bool = False) -> DataFrame:
+def load_data_frame(directory: list[str], data_frame_name: str, log: bool = False) -> DataFrame:
+    directory = join(*directory)
     if log:
-        print("Loading " + data_frame_name + ".csv")
-    return read_csv("./" + SOURCE + "/" + directory_name + "/" + data_frame_name + ".csv")
+        print("Loading " + join(*[SOURCE, directory, data_frame_name + ".csv"]))
+    return read_csv(join(*[SOURCE, directory, data_frame_name + ".csv"]))

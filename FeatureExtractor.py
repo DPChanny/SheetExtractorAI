@@ -11,7 +11,7 @@ from BeatExtractor import plot_beats, Beat, plot_beat_states
 
 def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
     if log:
-        print("Extracting " + sample.name + " wave feature")
+        print("Extracting " + sample.sample_name + " wave feature")
 
     amplitudes = sample.amplitudes
     amplitudes_peaks, _ = find_peaks(clip(amplitudes, 0, max(amplitudes)))
@@ -21,11 +21,11 @@ def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
 
 def save_wave_feature_plot(sample: Sample,
                            wave_feature: WaveFeature,
-                           directory_name: str,
+                           directory: list[str],
                            plot_name: str,
                            log: bool = False):
     fig = figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT * 2))
-    fig.suptitle(sample.name + " Wave Feature")
+    fig.suptitle(sample.sample_name + " Wave Feature")
 
     amplitudes_ax = fig.add_subplot(211)
     amplitudes_ax.set_title("Amplitudes")
@@ -47,12 +47,12 @@ def save_wave_feature_plot(sample: Sample,
              (0, sample.duration, 1 / sample.beat_per_second / 4))
 
     fig.tight_layout()
-    save_plot(directory_name, plot_name + ".wf", fig, log=log)
+    save_plot(directory, plot_name + ".wf", fig, log=log)
 
 
 def extract_stft_feature(sample: Sample, log: bool = False) -> STFTFeature:
     if log:
-        print("Extracting " + sample.name + " stft feature")
+        print("Extracting " + sample.sample_name + " stft feature")
 
     amplitudes_stft = stft(sample.amplitudes,
                            win_length=sample.win_length,
@@ -80,13 +80,13 @@ def extract_stft_feature(sample: Sample, log: bool = False) -> STFTFeature:
 
 def save_stft_feature_plot(sample: Sample,
                            stft_feature: STFTFeature,
-                           directory_name: str,
+                           directory: list[str],
                            plot_name: str,
                            beats: list[Beat] = None,
                            beat_states: list[BeatState] = None,
                            log: bool = False):
     fig = figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT * 3))
-    fig.suptitle(sample.name + " STFT Feature")
+    fig.suptitle(sample.sample_name + " STFT Feature")
 
     magnitudes_db_ax = fig.add_subplot(311)
     magnitudes_db_ax.set_title("Magnitudes dB")
@@ -130,4 +130,4 @@ def save_stft_feature_plot(sample: Sample,
              (0, sample.duration, 1 / sample.beat_per_second / 4))
 
     fig.tight_layout()
-    save_plot(directory_name, plot_name + ".sf", fig, log=log)
+    save_plot(directory, plot_name + ".sf", fig, log=log)

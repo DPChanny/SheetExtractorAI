@@ -9,24 +9,10 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
 from FeatureExtractor import STFTFeature
-from Public import load_data_frame, save_plot, BeatType, Beat, BeatState, FIG_HEIGHT
-from Public import RESULT, SOURCE, save_data_frame
+from Public import load_data_frame, save_data_frame, save_plot
+from Public import START, END, BEAT_STATE, BeatStateColor, DIFFERENCE, LEFT, VALUE, RIGHT
+from Public import RESULT, SOURCE, FIG_HEIGHT, BeatType, Beat, BeatState
 from Sample import Sample
-
-START = "start"
-END = "end"
-LEFT = "left_"
-DIFFERENCE = "difference_"
-RIGHT = "right_"
-BEAT_STATE = "beat_state"
-VALUE = "value"
-
-
-BeatStateColor = {
-    BeatState.START: "green",
-    BeatState.MIDDLE: "blue",
-    BeatState.NONE: "red"
-}
 
 
 def extract_beat_states(sample: Sample,
@@ -34,7 +20,7 @@ def extract_beat_states(sample: Sample,
                         beat_state_data_frame: DataFrame,
                         log: bool = False) -> list[BeatState]:
     if log:
-        print("Extracting " + sample.name + " beat state")
+        print("Extracting " + sample.sample_name + " beat state")
     beat_states = [BeatState.NONE for _ in range(len(stft_feature.magnitudes_sum))]
 
     for index in beat_state_data_frame.index:
@@ -44,8 +30,8 @@ def extract_beat_states(sample: Sample,
     return beat_states
 
 
-def load_beat_state_data_frame(directory_name: str, data_frame_name: str, log: bool = False):
-    return load_data_frame(directory_name, data_frame_name + ".bsdf", log=log)
+def load_beat_state_data_frame(directory: list[str], data_frame_name: str, log: bool = False):
+    return load_data_frame(directory, data_frame_name + ".bsdf", log=log)
 
 
 def plot_beat_states(ax: Axes, beat_states: list[BeatState], stft_feature: STFTFeature):
@@ -88,8 +74,8 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log
     return beat_data_frame
 
 
-def save_beat_data_frame(beat_data_frame: DataFrame, directory_name: str, data_frame_name: str, log: bool = False):
-    save_data_frame(directory_name, data_frame_name + ".bdf", beat_data_frame, log=log)
+def save_beat_data_frame(beat_data_frame: DataFrame, directory: list[str], data_frame_name: str, log: bool = False):
+    save_data_frame(directory, data_frame_name + ".bdf", beat_data_frame, log=log)
 
 
 def extract_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
@@ -110,7 +96,7 @@ def extract_beats(sample: Sample,
                   beat_states: list[BeatState],
                   log: bool = False) -> list[Beat]:
     if log:
-        print("Extracting " + sample.name + " beat type")
+        print("Extracting " + sample.sample_name + " beat type")
 
     error_range = 1 / sample.beat_per_second / 2 / 5
 
@@ -175,15 +161,15 @@ class BeatStateExtractor:
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit([BeatState.START.value, BeatState.MIDDLE.value, BeatState.NONE.value])
 
-    def save(self, directory_name: str, beat_extractor_name: str, log: bool = False):
+    def save(self, directory: str, beat_extractor_name: str, log: bool = False):
         if log:
             print("Saving " + beat_extractor_name)
-        self.model.save_weights("./" + RESULT + "/" + directory_name + "/" + beat_extractor_name + "/model")
+        self.model.save_weights("./" + RESULT + "/" + directory + "/" + beat_extractor_name + "/model")
 
-    def load(self, directory_name: str, beat_extractor_name: str, log: bool = False):
+    def load(self, directory: str, beat_extractor_name: str, log: bool = False):
         if log:
             print("Loading " + beat_extractor_name)
-        self.model.load_weights("./" + SOURCE + "/" + directory_name + "/" + beat_extractor_name + "/model")
+        self.model.load_weights("./" + SOURCE + "/" + directory + "/" + beat_extractor_name + "/model")
 
     def fit(self,
             beat_data_frame: DataFrame,
@@ -247,7 +233,7 @@ class BeatStateExtractor:
 
     def extract_beat_states(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
         if log:
-            print("Extracting " + sample.name + " beat state")
+            print("Extracting " + sample.sample_name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
@@ -259,7 +245,7 @@ class BeatStateExtractor:
 
 
 def save_beat_extractor_history_plot(beat_extractor_history: dict,
-                                     directory_name: str,
+                                     directory: list[str],
                                      plot_name: str,
                                      log: bool = False):
     fig = figure(figsize=(max(len(beat_extractor_history[_]) for _ in beat_extractor_history.keys()) / 100,
@@ -273,7 +259,7 @@ def save_beat_extractor_history_plot(beat_extractor_history: dict,
 
     history_ax.legend()
     history_ax.set_ylim(0, 1)
-    save_plot(directory_name, plot_name + ".beh", fig, log=log)
+    save_plot(directory, plot_name + ".beh", fig, log=log)
 
 
 def plot_beats(ax: Axes, beats: list[Beat]):
