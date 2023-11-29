@@ -1,17 +1,18 @@
-from matplotlib.axes import Axes
-from matplotlib.pyplot import figure
-from pandas import DataFrame
 from keras import Sequential
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
 from keras.utils import to_categorical
+from matplotlib.axes import Axes
+from matplotlib.pyplot import figure
 from numpy import argmax, array
+from pandas import DataFrame
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
-from FeatureExtractor import STFTFeature
-from Public import load_data_frame, save_data_frame, save_plot
-from Public import START, END, BEAT_STATE, BeatStateColor, DIFFERENCE, LEFT, VALUE, RIGHT
-from Public import RESULT, SOURCE, FIG_HEIGHT, BeatType, Beat, BeatState
+
+from Public import (RESULT, SOURCE, FIG_HEIGHT, BeatType, Beat, BeatState, STFTFeature,
+                    BeatStateDataFrameColumn,
+                    BeatDataFrameColumn, BeatStateColor,
+                    load_data_frame, save_data_frame, save_plot)
 from Sample import Sample
 
 
@@ -24,8 +25,9 @@ def extract_beat_states(sample: Sample,
     beat_states = [BeatState.NONE for _ in range(len(stft_feature.magnitudes_sum))]
 
     for index in beat_state_data_frame.index:
-        for i in range(beat_state_data_frame[START][index], beat_state_data_frame[END][index]):
-            beat_states[i] = BeatState(beat_state_data_frame[BEAT_STATE][index])
+        for i in range(beat_state_data_frame[BeatStateDataFrameColumn.START.value][index],
+                       beat_state_data_frame[BeatStateDataFrameColumn.END.value][index]):
+            beat_states[i] = BeatState(beat_state_data_frame[BeatStateDataFrameColumn.BEAT_STATE.value][index])
 
     return beat_states
 
@@ -55,19 +57,19 @@ def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log
     beat_feature = stft_feature.magnitudes_sum / max(stft_feature.magnitudes_sum)
 
     for left in range(wing_length):
-        beat_data_frame[LEFT + DIFFERENCE + str(left)] = []
-    beat_data_frame[VALUE] = []
+        beat_data_frame[BeatDataFrameColumn.LEFT_DIFFERENCE.value + str(left)] = []
+    beat_data_frame[BeatDataFrameColumn.VALUE.value] = []
     for right in range(wing_length):
-        beat_data_frame[RIGHT + DIFFERENCE + str(right)] = []
+        beat_data_frame[BeatDataFrameColumn.RIGHT_DIFFERENCE.value + str(right)] = []
 
     for i in range(len(beat_feature)):
         for right in range(wing_length):
-            beat_data_frame[RIGHT + DIFFERENCE + str(right)].append(
+            beat_data_frame[BeatDataFrameColumn.LEFT_DIFFERENCE.value + str(right)].append(
                 get_difference(beat_feature, i + right, i + right + 1))
+        beat_data_frame[BeatDataFrameColumn.VALUE.value].append(beat_feature[i])
         for left in range(wing_length):
-            beat_data_frame[LEFT + DIFFERENCE + str(wing_length - left - 1)].append(
+            beat_data_frame[BeatDataFrameColumn.RIGHT_DIFFERENCE.value + str(wing_length - left - 1)].append(
                 get_difference(beat_feature, i - left - 1, i - left))
-        beat_data_frame[VALUE].append(beat_feature[i])
 
     beat_data_frame = DataFrame(beat_data_frame)
 
@@ -244,18 +246,18 @@ class BeatStateExtractor:
         return [BeatState(beat_state) for beat_state in beat_states]
 
 
-def save_beat_extractor_history_plot(beat_extractor_history: dict,
-                                     directory: list[str],
-                                     plot_name: str,
-                                     log: bool = False):
-    fig = figure(figsize=(max(len(beat_extractor_history[_]) for _ in beat_extractor_history.keys()) / 100,
+def save_beat_state_extractor_history_plot(beat_state_extractor_history: dict,
+                                           directory: list[str],
+                                           plot_name: str,
+                                           log: bool = False):
+    fig = figure(figsize=(max(len(beat_state_extractor_history[_]) for _ in beat_state_extractor_history.keys()) / 100,
                           FIG_HEIGHT))
     fig.suptitle("Beat Extractor History")
 
     history_ax = fig.add_subplot(111)
 
-    for key in beat_extractor_history.keys():
-        history_ax.plot(beat_extractor_history[key], label=key, linewidth=0.5)
+    for key in beat_state_extractor_history.keys():
+        history_ax.plot(beat_state_extractor_history[key], label=key, linewidth=0.5)
 
     history_ax.legend()
     history_ax.set_ylim(0, 1)

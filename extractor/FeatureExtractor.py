@@ -1,12 +1,13 @@
 from librosa import amplitude_to_db, stft
 from librosa.display import specshow
 from librosa.feature import melspectrogram
-from scipy.signal import find_peaks
-from numpy import array, clip
 from matplotlib.pyplot import figure
-from Sample import Sample
+from numpy import array, clip
+from scipy.signal import find_peaks
+
 from Public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT, WaveFeature, STFTFeature, BeatState
-from BeatExtractor import plot_beats, Beat, plot_beat_states
+from Sample import Sample
+from extractor.BeatExtractor import plot_beats, Beat, plot_beat_states
 
 
 def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:

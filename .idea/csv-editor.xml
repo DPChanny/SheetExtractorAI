@@ -17,7 +17,112 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\result\train\marimba_120_eighth_note\marimba_120_eighth_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_120_eighth_rest\marimba_120_eighth_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\result\train\marimba_120_quarter_note\marimba_120_quarter_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_120_quarter_rest\marimba_120_quarter_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_60_eighth_note\marimba_60_eighth_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_60_eighth_rest\marimba_60_eighth_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_60_quarter_note\marimba_60_quarter_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\marimba_60_quarter_rest\marimba_60_quarter_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_120_eighth_note\piano_120_eighth_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_120_eighth_rest\piano_120_eighth_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_120_quarter_note\piano_120_quarter_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_120_quarter_rest\piano_120_quarter_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_60_eighth_note\piano_60_eighth_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_60_eighth_rest\piano_60_eighth_rest.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_60_quarter_note\piano_60_quarter_note.bdf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result\train\piano_60_quarter_rest\piano_60_quarter_rest.bdf.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

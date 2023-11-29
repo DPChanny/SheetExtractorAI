@@ -1,27 +1,32 @@
-from os import makedirs
 from enum import Enum
+from os import makedirs
 from os.path import join
 
-from matplotlib.pyplot import close
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.pyplot import close
 from numpy import arange, ndarray
 from pandas import DataFrame, read_csv
 
 
-START = "start"
-END = "end"
-LEFT = "left_"
-RIGHT = "right_"
-DIFFERENCE = "difference_"
-VALUE = "value"
-BEAT_STATE = "beat_state"
+class BeatStateDataFrameColumn(Enum):
+    START = "start"
+    END = "end"
+    BEAT_STATE = "beat_state"
+
+
+class BeatDataFrameColumn(Enum):
+    START = "start"
+    END = "end"
+    LEFT_DIFFERENCE = "left_difference_"
+    RIGHT_DIFFERENCE = "right_difference_"
+    VALUE = "value"
 
 
 class BeatState(Enum):
-    START = "beat_state_start"
-    MIDDLE = "beat_state_middle"
-    NONE = "beat_state_none"
+    START = "start"
+    MIDDLE = "middle"
+    NONE = "none"
 
 
 BeatStateColor = {
@@ -32,10 +37,10 @@ BeatStateColor = {
 
 
 class BeatType(Enum):
-    WHOLE = "beat_type_whole"
-    HALF = "beat_type_half"
-    QUARTER = "beat_type_quarter"
-    EIGHTH = "beat_type_eighth"
+    WHOLE = "whole"
+    HALF = "half"
+    QUARTER = "quarter"
+    EIGHTH = "eighth"
 
 
 class STFTFeature:

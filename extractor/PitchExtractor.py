@@ -1,6 +1,5 @@
 import math
 
-
 pitch_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 pitch_octave_names = []
 

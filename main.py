@@ -1,15 +1,23 @@
 from pandas import DataFrame, concat
-from FeatureExtractor import extract_stft_feature, save_stft_feature_plot, extract_wave_feature, save_wave_feature_plot
-from BeatExtractor import BeatStateExtractor, extract_beats, save_beat_data_frame, save_beat_extractor_history_plot
-from BeatExtractor import load_beat_state_data_frame
-from BeatExtractor import extract_beat_data_frame, extract_beat_states
+
 from Sample import Sample
+from extractor.BeatExtractor import (BeatStateExtractor,
+                                     save_beat_state_extractor_history_plot,
+                                     extract_beat_data_frame,
+                                     save_beat_data_frame,
+                                     extract_beat_states,
+                                     extract_beats,
+                                     load_beat_state_data_frame)
+from extractor.FeatureExtractor import (extract_stft_feature,
+                                        save_stft_feature_plot,
+                                        extract_wave_feature,
+                                        save_wave_feature_plot)
 
 LOG = True
 
 WING_LENGTH = 5
 
-TRAIN_BEAT_EXTRACTOR = False
+TRAIN_BEAT_EXTRACTOR = True
 BEAT_EXTRACTOR_NAME = "beat_extractor_0"
 
 EPOCHS = 1024
@@ -26,40 +34,48 @@ SAVE_WAVE_FEATURE_PLOT = True
 
 SAVE_BEAT_EXTRACTOR_HISTORY_PLOT = True
 
+# train_samples = [Sample(["train", "marimba_60_quarter_rest"],
+#                         "marimba_60_quarter_rest", 60, log=LOG),
+#                  Sample(["train", "marimba_60_quarter_note"],
+#                         "marimba_60_quarter_note", 60, log=LOG),
+#                  Sample(["train", "marimba_60_eighth_rest"],
+#                         "marimba_60_eighth_rest", 60, log=LOG),
+#                  Sample(["train", "marimba_60_eighth_note"],
+#                         "marimba_60_eighth_note", 60, log=LOG),
+#                  Sample(["train", "marimba_120_quarter_rest"],
+#                         "marimba_120_quarter_rest", 120, log=LOG),
+#                  Sample(["train", "marimba_120_quarter_note"],
+#                         "marimba_120_quarter_note", 120, log=LOG),
+#                  Sample(["train", "marimba_120_eighth_rest"],
+#                         "marimba_120_eighth_rest", 120, log=LOG),
+#                  Sample(["train", "marimba_120_eighth_note"],
+#                         "marimba_120_eighth_note", 120, log=LOG),
+#                  Sample(["train", "piano_60_quarter_rest"],
+#                         "piano_60_quarter_rest", 60, log=LOG),
+#                  Sample(["train", "piano_60_quarter_note"],
+#                         "piano_60_quarter_note", 60, log=LOG),
+#                  Sample(["train", "piano_60_eighth_rest"],
+#                         "piano_60_eighth_rest", 60, log=LOG),
+#                  Sample(["train", "piano_60_eighth_note"],
+#                         "piano_60_eighth_note", 60, log=LOG),
+#                  Sample(["train", "piano_120_quarter_rest"],
+#                         "piano_120_quarter_rest", 120, log=LOG),
+#                  Sample(["train", "piano_120_quarter_note"],
+#                         "piano_120_quarter_note", 120, log=LOG),
+#                  Sample(["train", "piano_120_eighth_rest"],
+#                         "piano_120_eighth_rest", 120, log=LOG),
+#                  Sample(["train", "piano_120_eighth_note"],
+#                         "piano_120_eighth_note", 120, log=LOG)]
+
 train_samples = [Sample(["train", "marimba_60_quarter_rest"],
                         "marimba_60_quarter_rest", 60, log=LOG),
                  Sample(["train", "marimba_60_quarter_note"],
-                        "marimba_60_quarter_note", 60, log=LOG),
-                 Sample(["train", "marimba_60_eighth_rest"],
-                        "marimba_60_eighth_rest", 60, log=LOG),
-                 Sample(["train", "marimba_60_eighth_note"],
-                        "marimba_60_eighth_note", 60, log=LOG),
-                 Sample(["train", "marimba_120_quarter_rest"],
-                        "marimba_120_quarter_rest", 120, log=LOG),
-                 Sample(["train", "marimba_120_quarter_note"],
-                        "marimba_120_quarter_note", 120, log=LOG),
-                 Sample(["train", "marimba_120_eighth_rest"],
-                        "marimba_120_eighth_rest", 120, log=LOG),
-                 Sample(["train", "marimba_120_eighth_note"],
-                        "marimba_120_eighth_note", 120, log=LOG),
-                 Sample(["train", "piano_60_quarter_rest"],
-                        "piano_60_quarter_rest", 60, log=LOG),
-                 Sample(["train", "piano_60_quarter_note"],
-                        "piano_60_quarter_note", 60, log=LOG),
-                 Sample(["train", "piano_60_eighth_rest"],
-                        "piano_60_eighth_rest", 60, log=LOG),
-                 Sample(["train", "piano_60_eighth_note"],
-                        "piano_60_eighth_note", 60, log=LOG),
-                 Sample(["train", "piano_120_quarter_rest"],
-                        "piano_120_quarter_rest", 120, log=LOG),
-                 Sample(["train", "piano_120_quarter_note"],
-                        "piano_120_quarter_note", 120, log=LOG),
-                 Sample(["train", "piano_120_eighth_rest"],
-                        "piano_120_eighth_rest", 120, log=LOG),
-                 Sample(["train", "piano_120_eighth_note"],
-                        "piano_120_eighth_note", 120, log=LOG)]
+                        "marimba_60_quarter_note", 60, log=LOG)]
 
-samples = []
+samples = [Sample(["train", "marimba_60_quarter_rest"],
+                  "marimba_60_quarter_rest", 60, log=LOG),
+           Sample(["train", "marimba_60_quarter_note"],
+                  "marimba_60_quarter_note", 60, log=LOG)]
 
 beat_state_extractor = BeatStateExtractor(WING_LENGTH)
 
@@ -103,21 +119,21 @@ for train_sample in train_samples:
     total_train_beat_data_frame = concat([total_train_beat_data_frame, train_beat_data_frame])
     total_train_beat_states += train_beat_states
 
-beat_extractor_history = beat_state_extractor.fit(total_train_beat_data_frame,
-                                                  total_train_beat_states,
-                                                  epochs=EPOCHS,
-                                                  n_splits=N_SPLITS,
-                                                  batch_size=BATCH_SIZE,
-                                                  patience=PATIENCE,
-                                                  log=LOG)
-
-if SAVE_BEAT_EXTRACTOR_HISTORY_PLOT:
-    save_beat_extractor_history_plot(beat_extractor_history,
-                                     ["beat_extractor"],
-                                     BEAT_EXTRACTOR_NAME,
-                                     log=LOG)
-
 if TRAIN_BEAT_EXTRACTOR:
+    beat_extractor_history = beat_state_extractor.fit(total_train_beat_data_frame,
+                                                      total_train_beat_states,
+                                                      epochs=EPOCHS,
+                                                      n_splits=N_SPLITS,
+                                                      batch_size=BATCH_SIZE,
+                                                      patience=PATIENCE,
+                                                      log=LOG)
+
+    if SAVE_BEAT_EXTRACTOR_HISTORY_PLOT:
+        save_beat_state_extractor_history_plot(beat_extractor_history,
+                                               ["beat_extractor"],
+                                               BEAT_EXTRACTOR_NAME,
+                                               log=LOG)
+
     beat_state_extractor.save("beat_extractor", BEAT_EXTRACTOR_NAME, log=LOG)
 else:
     beat_state_extractor.load("beat_extractor", BEAT_EXTRACTOR_NAME, log=LOG)
