@@ -231,10 +231,10 @@ class BeatStateExtractor:
                                                               restore_best_weights=True,
                                                               verbose=1 if log else 0)])
 
-            accuracy += history.beat_extractor_history['accuracy']
-            val_accuracy += history.beat_extractor_history['val_accuracy']
-            loss += history.beat_extractor_history['loss']
-            val_loss += history.beat_extractor_history['val_loss']
+            accuracy += history.history['accuracy']
+            val_accuracy += history.history['val_accuracy']
+            loss += history.history['loss']
+            val_loss += history.history['val_loss']
 
         history = {
             "accuracy": accuracy,
@@ -258,17 +258,18 @@ class BeatStateExtractor:
         return [BeatState(beat_state) for beat_state in beat_states]
 
 
-def save_beat_extractor_history_plot(history: dict,
+def save_beat_extractor_history_plot(beat_extractor_history: dict,
                                      directory_name: str,
                                      plot_name: str,
                                      log: bool = False):
-    fig = figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, FIG_HEIGHT))
+    fig = figure(figsize=(max(len(beat_extractor_history[_]) for _ in beat_extractor_history.keys()) / 100,
+                          FIG_HEIGHT))
     fig.suptitle("Beat Extractor History")
 
     history_ax = fig.add_subplot(111)
 
-    for key in history.keys():
-        history_ax.plot(history[key], label=key, linewidth=0.5)
+    for key in beat_extractor_history.keys():
+        history_ax.plot(beat_extractor_history[key], label=key, linewidth=0.5)
 
     history_ax.legend()
     history_ax.set_ylim(0, 1)
