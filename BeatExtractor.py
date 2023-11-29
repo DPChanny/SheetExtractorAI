@@ -1,18 +1,16 @@
-from enum import Enum
-
+from matplotlib.axes import Axes
+from matplotlib.pyplot import figure
 from pandas import DataFrame
 from keras import Sequential
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
 from keras.utils import to_categorical
-from matplotlib import pyplot as plt
 from numpy import argmax, array
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
-
 from FeatureExtractor import STFTFeature
-from Public import load_data_frame, save_plot, set_tick
-from Public import RESULT, SOURCE, save_data_frame, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT
+from Public import load_data_frame, save_plot, BeatType, Beat, BeatState, FIG_HEIGHT
+from Public import RESULT, SOURCE, save_data_frame
 from Sample import Sample
 
 START = "start"
@@ -24,77 +22,35 @@ BEAT_STATE = "beat_state"
 VALUE = "value"
 
 
-class BeatType(Enum):
-    WHOLE = "beat_type_whole"
-    HALF = "beat_type_half"
-    QUARTER = "beat_type_quarter"
-    EIGHTH = "beat_type_eighth"
-
-
-class BeatState(Enum):
-    START = "beat_state_start"
-    MIDDLE = "beat_state_middle"
-    NONE = "beat_state_none"
-
-
-class Beat:
-    def __init__(self, beat_type: BeatType, start: int, end: int, note: bool):
-        self.beat_type = beat_type
-        self.start = start
-        self.end = end
-        self.note = note
-
-    def __str__(self):
-        return (self.beat_type.value +
-                ("_note" if self.note else "_rest") +
-                str((self.start, self.end)))
-
-
-BeatStatusColor = {
+BeatStateColor = {
     BeatState.START: "green",
     BeatState.MIDDLE: "blue",
     BeatState.NONE: "red"
 }
 
 
-def extract_beat_state(sample: Sample,
-                       stft_feature: STFTFeature,
-                       beat_state_data_frame: DataFrame,
-                       log: bool = False) -> list[BeatState]:
+def extract_beat_states(sample: Sample,
+                        stft_feature: STFTFeature,
+                        beat_state_data_frame: DataFrame,
+                        log: bool = False) -> list[BeatState]:
     if log:
         print("Extracting " + sample.name + " beat state")
-    beat_state = [BeatState.NONE for _ in range(len(stft_feature.magnitudes_sum))]
+    beat_states = [BeatState.NONE for _ in range(len(stft_feature.magnitudes_sum))]
 
     for index in beat_state_data_frame.index:
         for i in range(beat_state_data_frame[START][index], beat_state_data_frame[END][index]):
-            beat_state[i] = BeatState(beat_state_data_frame[BEAT_STATE][index])
+            beat_states[i] = BeatState(beat_state_data_frame[BEAT_STATE][index])
 
-    return beat_state
+    return beat_states
 
 
 def load_beat_state_data_frame(directory_name: str, data_frame_name: str, log: bool = False):
     return load_data_frame(directory_name, data_frame_name + ".bsdf", log=log)
 
 
-def save_beat_state_plot(sample: Sample,
-                         stft_feature: STFTFeature,
-                         beat_state: list[BeatState],
-                         directory_name: str,
-                         plot_name: str,
-                         log: bool = False):
-    fig = plt.figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT))
-    fig.suptitle(sample.name + " Beat State")
-
-    beat_state_ax = fig.add_subplot(111)
-    plt.plot(stft_feature.magnitudes_sum, linewidth=0.5)
+def plot_beat_states(ax: Axes, beat_states: list[BeatState], stft_feature: STFTFeature):
     for index, value in enumerate(stft_feature.magnitudes_sum):
-        plt.scatter(index, value, s=1.5, edgecolors="none", c=BeatStatusColor[beat_state[index]])
-    set_tick(beat_state_ax,
-             (0, len(stft_feature.magnitudes_sum), 5),
-             (0, sample.duration, 1 / sample.beat_per_second / 4))
-
-    fig.tight_layout()
-    save_plot(directory_name, plot_name + ".bs", fig, log=log)
+        ax.scatter(index, value, s=1.5, edgecolors="none", c=BeatStateColor[beat_states[index]])
 
 
 def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
@@ -150,60 +106,60 @@ def extract_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]
     return min_error_beat_type, min_error_beat_type_duration
 
 
-def extract_beat(sample: Sample,
-                 beat_state: list[BeatState],
-                 log: bool = False) -> list[Beat]:
+def extract_beats(sample: Sample,
+                  beat_states: list[BeatState],
+                  log: bool = False) -> list[Beat]:
     if log:
         print("Extracting " + sample.name + " beat type")
 
     error_range = 1 / sample.beat_per_second / 2 / 5
 
-    beat = []
+    beats = []
 
     last_beat_state = BeatState.NONE
     last_beat_start_index = 0
     last_beat_none_index = 0
 
-    for index, state in enumerate(beat_state):
-        if state == BeatState.START:
-            if last_beat_state == BeatState.MIDDLE:
-                duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
+    for index, state in enumerate(beat_states):
+        if state is BeatState.START:
+            if last_beat_state is BeatState.MIDDLE:
+                duration = (index - last_beat_start_index) / len(beat_states) * sample.duration
                 beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range:
-                    beat.append(Beat(beat_type, last_beat_start_index, index, True))
+                    beats.append(Beat(beat_type, last_beat_start_index, index, True))
                     last_beat_state = state
                     last_beat_start_index = index
-            if last_beat_state == BeatState.NONE:
-                duration = (index - last_beat_none_index) / len(beat_state) * sample.duration
+            if last_beat_state is BeatState.NONE:
+                duration = (index - last_beat_none_index) / len(beat_states) * sample.duration
                 beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range * 2:
-                    beat.append(Beat(beat_type, last_beat_none_index, index, False))
+                    beats.append(Beat(beat_type, last_beat_none_index, index, False))
                 last_beat_state = state
                 last_beat_start_index = index
-        if state == BeatState.NONE:
-            if last_beat_state == BeatState.MIDDLE:
-                duration = (index - last_beat_start_index) / len(beat_state) * sample.duration
+        if state is BeatState.NONE:
+            if last_beat_state is BeatState.MIDDLE:
+                duration = (index - last_beat_start_index) / len(beat_states) * sample.duration
                 beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range * 2:
-                    beat.append(Beat(beat_type, last_beat_start_index, index, True))
+                    beats.append(Beat(beat_type, last_beat_start_index, index, True))
                     last_beat_state = state
                     last_beat_none_index = index
-        if state == BeatState.MIDDLE:
+        if state is BeatState.MIDDLE:
             if last_beat_state != BeatState.NONE:
                 last_beat_state = state
 
-    if last_beat_state == BeatState.MIDDLE:
-        duration = (len(beat_state) - last_beat_start_index) / len(beat_state) * sample.duration
+    if last_beat_state is BeatState.MIDDLE:
+        duration = (len(beat_states) - last_beat_start_index) / len(beat_states) * sample.duration
         beat_type, beat_type_duration = extract_beat_type(duration, sample)
         if abs(beat_type_duration - duration) < error_range:
-            beat.append(Beat(beat_type, last_beat_start_index, len(beat_state), True))
-    if last_beat_state == BeatState.NONE:
-        duration = (len(beat_state) - last_beat_none_index) / len(beat_state) * sample.duration
+            beats.append(Beat(beat_type, last_beat_start_index, len(beat_states), True))
+    if last_beat_state is BeatState.NONE:
+        duration = (len(beat_states) - last_beat_none_index) / len(beat_states) * sample.duration
         beat_type, beat_type_duration = extract_beat_type(duration, sample)
         if abs(beat_type_duration - duration) < error_range * 2:
-            beat.append(Beat(beat_type, last_beat_none_index, len(beat_state), False))
+            beats.append(Beat(beat_type, last_beat_none_index, len(beat_states), False))
 
-    return beat
+    return beats
 
 
 class BeatStateExtractor:
@@ -231,14 +187,14 @@ class BeatStateExtractor:
 
     def fit(self,
             beat_data_frame: DataFrame,
-            beat_state: list[BeatState],
+            beat_states: list[BeatState],
             epochs: int = 1024,
             n_splits: int = 5,
             batch_size: int = 32,
             patience: int = 32,
             log: bool = False) -> dict:
         beat_data = beat_data_frame.values
-        beat_state = array([_.value for _ in beat_state])
+        beat_states = array([beat_state.value for beat_state in beat_states])
 
         accuracy = []
         val_accuracy = []
@@ -247,12 +203,12 @@ class BeatStateExtractor:
 
         for index, (train, val) in enumerate(StratifiedKFold(n_splits=n_splits,
                                                              shuffle=True).split(beat_data,
-                                                                                 beat_state)):
+                                                                                 beat_states)):
             if log:
                 print("Stratified K Fold: " + str(index + 1))
 
             train_beat_data, val_beat_data = beat_data[train], beat_data[val]
-            train_beat_state, val_beat_state = beat_state[train], beat_state[val]
+            train_beat_state, val_beat_state = beat_states[train], beat_states[val]
 
             train_beat_data = train_beat_data.reshape(train_beat_data.shape[0],
                                                       train_beat_data.shape[1], 1)
@@ -275,10 +231,10 @@ class BeatStateExtractor:
                                                               restore_best_weights=True,
                                                               verbose=1 if log else 0)])
 
-            accuracy += history.history['accuracy']
-            val_accuracy += history.history['val_accuracy']
-            loss += history.history['loss']
-            val_loss += history.history['val_loss']
+            accuracy += history.beat_extractor_history['accuracy']
+            val_accuracy += history.beat_extractor_history['val_accuracy']
+            loss += history.beat_extractor_history['loss']
+            val_loss += history.beat_extractor_history['val_loss']
 
         history = {
             "accuracy": accuracy,
@@ -289,24 +245,24 @@ class BeatStateExtractor:
 
         return history
 
-    def extract_beat_state(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
+    def extract_beat_states(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
         if log:
             print("Extracting " + sample.name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
                                                    beat_data_frame.values.shape[1], 1)
 
-        beat_state = self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data,
-                                                                                    verbose=2 if log else 0),
-                                                                 axis=1))
+        beat_states = self.label_encoder.inverse_transform(argmax(self.model.predict(beat_data,
+                                                                                     verbose=2 if log else 0),
+                                                                  axis=1))
 
-        return [BeatState(_) for _ in beat_state]
+        return [BeatState(beat_state) for beat_state in beat_states]
 
 
 def save_beat_extractor_history_plot(history: dict,
                                      directory_name: str,
                                      plot_name: str,
                                      log: bool = False):
-    fig = plt.figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, FIG_HEIGHT))
+    fig = figure(figsize=(max(len(history[_]) for _ in history.keys()) / 100, FIG_HEIGHT))
     fig.suptitle("Beat Extractor History")
 
     history_ax = fig.add_subplot(111)
@@ -317,3 +273,15 @@ def save_beat_extractor_history_plot(history: dict,
     history_ax.legend()
     history_ax.set_ylim(0, 1)
     save_plot(directory_name, plot_name + ".beh", fig, log=log)
+
+
+def plot_beats(ax: Axes, beats: list[Beat]):
+    for beat in beats:
+        ax.axvline(beat.start,
+                   color="blue" if beat.note else "red",
+                   linestyle="dashed",
+                   linewidth=0.5)
+        ax.axvline(beat.end,
+                   color="blue" if beat.note else "red",
+                   linestyle="dashed",
+                   linewidth=0.5)

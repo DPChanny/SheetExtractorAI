@@ -1,11 +1,10 @@
-import sys
-
+from sys import maxsize as int_max
 from Public import SOURCE
 from librosa import load, get_duration
 
 
 class Sample:
-    def __init__(self, name: str, beat_per_minute: int, start: int = 0, end: int = sys.maxsize, log: bool = False):
+    def __init__(self, name: str, beat_per_minute: int, start: int = 0, end: int = int_max, log: bool = False):
         self.beat_per_minute = beat_per_minute
         self.beat_per_second = self.beat_per_minute / 60
 
