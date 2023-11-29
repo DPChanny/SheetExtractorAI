@@ -145,7 +145,7 @@ def extract_beats(sample: Sample,
                     last_beat_state = state
                     last_beat_none_index = index
         if state is BeatState.MIDDLE:
-            if last_beat_state != BeatState.NONE:
+            if last_beat_state is not BeatState.NONE:
                 last_beat_state = state
 
     if last_beat_state is BeatState.MIDDLE:
@@ -279,10 +279,10 @@ def save_beat_extractor_history_plot(beat_extractor_history: dict,
 def plot_beats(ax: Axes, beats: list[Beat]):
     for beat in beats:
         ax.axvline(beat.start,
-                   color="blue" if beat.note else "red",
-                   linestyle="dashed",
+                   color="green" if beat.note else "red",
+                   linestyle="dashdot",
                    linewidth=0.5)
         ax.axvline(beat.end,
-                   color="blue" if beat.note else "red",
-                   linestyle="dashed",
-                   linewidth=0.5)
+                   color="green" if beat.note else "red",
+                   linestyle="dotted",
+                   linewidth=0.25)

@@ -120,7 +120,7 @@ def save_stft_feature_plot(sample: Sample,
 
     magnitudes_sum_ax = fig.add_subplot(313)
     magnitudes_sum_ax.set_title("Magnitudes Sum")
-    magnitudes_sum_ax.plot(stft_feature.magnitudes_sum, linewidth=0.5)
+    magnitudes_sum_ax.plot(stft_feature.magnitudes_sum, linewidth=0.25, color="black")
     if beats is not None:
         plot_beats(magnitudes_sum_ax, beats)
     if beat_states is not None:
