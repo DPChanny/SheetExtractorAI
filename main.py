@@ -12,6 +12,8 @@ from extractor.FeatureExtractor import (extract_stft_feature,
                                         save_stft_feature_plot,
                                         extract_wave_feature,
                                         save_wave_feature_plot)
+from extractor.PitchExtractor import extract_beat_frequencies, extract_beat_pitches
+from extractor.SheetExtractor import extract_sheet, save_sheet
 
 LOG = True
 
@@ -34,48 +36,46 @@ SAVE_WAVE_FEATURE_PLOT = True
 
 SAVE_BEAT_STATE_EXTRACTOR_HISTORY_PLOT = True
 
-# train_samples = [Sample(["train", "marimba_60_quarter_rest"],
+# train_samples = [Sample(["train_sample", "marimba_60_quarter_rest"],
 #                         "marimba_60_quarter_rest", 60, log=LOG),
-#                  Sample(["train", "marimba_60_quarter_note"],
+#                  Sample(["train_sample", "marimba_60_quarter_note"],
 #                         "marimba_60_quarter_note", 60, log=LOG),
-#                  Sample(["train", "marimba_60_eighth_rest"],
+#                  Sample(["train_sample", "marimba_60_eighth_rest"],
 #                         "marimba_60_eighth_rest", 60, log=LOG),
-#                  Sample(["train", "marimba_60_eighth_note"],
+#                  Sample(["train_sample", "marimba_60_eighth_note"],
 #                         "marimba_60_eighth_note", 60, log=LOG),
-#                  Sample(["train", "marimba_120_quarter_rest"],
+#                  Sample(["train_sample", "marimba_120_quarter_rest"],
 #                         "marimba_120_quarter_rest", 120, log=LOG),
-#                  Sample(["train", "marimba_120_quarter_note"],
+#                  Sample(["train_sample", "marimba_120_quarter_note"],
 #                         "marimba_120_quarter_note", 120, log=LOG),
-#                  Sample(["train", "marimba_120_eighth_rest"],
+#                  Sample(["train_sample", "marimba_120_eighth_rest"],
 #                         "marimba_120_eighth_rest", 120, log=LOG),
-#                  Sample(["train", "marimba_120_eighth_note"],
+#                  Sample(["train_sample", "marimba_120_eighth_note"],
 #                         "marimba_120_eighth_note", 120, log=LOG),
-#                  Sample(["train", "piano_60_quarter_rest"],
+#                  Sample(["train_sample", "piano_60_quarter_rest"],
 #                         "piano_60_quarter_rest", 60, log=LOG),
-#                  Sample(["train", "piano_60_quarter_note"],
+#                  Sample(["train_sample", "piano_60_quarter_note"],
 #                         "piano_60_quarter_note", 60, log=LOG),
-#                  Sample(["train", "piano_60_eighth_rest"],
+#                  Sample(["train_sample", "piano_60_eighth_rest"],
 #                         "piano_60_eighth_rest", 60, log=LOG),
-#                  Sample(["train", "piano_60_eighth_note"],
+#                  Sample(["train_sample", "piano_60_eighth_note"],
 #                         "piano_60_eighth_note", 60, log=LOG),
-#                  Sample(["train", "piano_120_quarter_rest"],
+#                  Sample(["train_sample", "piano_120_quarter_rest"],
 #                         "piano_120_quarter_rest", 120, log=LOG),
-#                  Sample(["train", "piano_120_quarter_note"],
+#                  Sample(["train_sample", "piano_120_quarter_note"],
 #                         "piano_120_quarter_note", 120, log=LOG),
-#                  Sample(["train", "piano_120_eighth_rest"],
+#                  Sample(["train_sample", "piano_120_eighth_rest"],
 #                         "piano_120_eighth_rest", 120, log=LOG),
-#                  Sample(["train", "piano_120_eighth_note"],
+#                  Sample(["train_sample", "piano_120_eighth_note"],
 #                         "piano_120_eighth_note", 120, log=LOG)]
 
-train_samples = [Sample(["train", "marimba_60_quarter_rest"],
+train_samples = [Sample(["train_sample", "marimba_60_quarter_rest"],
                         "marimba_60_quarter_rest", 60, log=LOG),
-                 Sample(["train", "marimba_60_quarter_note"],
+                 Sample(["train_sample", "marimba_60_quarter_note"],
                         "marimba_60_quarter_note", 60, log=LOG)]
 
-samples = [Sample(["train", "marimba_60_quarter_rest"],
-                  "marimba_60_quarter_rest", 60, log=LOG),
-           Sample(["train", "marimba_60_quarter_note"],
-                  "marimba_60_quarter_note", 60, log=LOG)]
+samples = [Sample(["sample"], "marimba_60_quarter_rest", 60, log=LOG),
+           Sample(["sample"], "marimba_60_quarter_note", 60, log=LOG)]
 
 beat_state_extractor = BeatStateExtractor(WING_LENGTH)
 
@@ -84,35 +84,33 @@ if TRAIN_BEAT_STATE_EXTRACTOR:
     total_train_beat_states = []
 
     for train_sample in train_samples:
-        train_sample_wave_feature = extract_wave_feature(train_sample, log=LOG)
-        train_sample_stft_feature = extract_stft_feature(train_sample, log=LOG)
-        train_beat_data_frame = extract_beat_data_frame(train_sample_stft_feature,
-                                                        wing_length=WING_LENGTH,
-                                                        log=LOG)
+        wave_feature = extract_wave_feature(train_sample, log=LOG)
+        stft_feature = extract_stft_feature(train_sample, log=LOG)
+        train_beat_data_frame = extract_beat_data_frame(stft_feature, wing_length=WING_LENGTH, log=LOG)
         train_beat_states = extract_beat_states(train_sample,
-                                                train_sample_stft_feature,
-                                                load_beat_state_data_frame(["train", train_sample.sample_name],
+                                                stft_feature,
+                                                load_beat_state_data_frame(["train_sample", train_sample.sample_name],
                                                                            train_sample.sample_name, log=LOG),
                                                 log=LOG)
 
         if SAVE_TRAIN_WAVE_FEATURE_PLOT:
             save_wave_feature_plot(train_sample,
-                                   train_sample_wave_feature,
-                                   ["train", train_sample.sample_name],
+                                   wave_feature,
+                                   ["train_sample", train_sample.sample_name],
                                    train_sample.sample_name,
                                    log=LOG)
 
         if SAVE_TRAIN_STFT_FEATURE_PLOT:
             save_stft_feature_plot(train_sample,
-                                   train_sample_stft_feature,
-                                   ["train", train_sample.sample_name],
+                                   stft_feature,
+                                   ["train_sample", train_sample.sample_name],
                                    train_sample.sample_name,
                                    beat_states=train_beat_states,
                                    log=LOG)
 
         if SAVE_TRAIN_BEAT_DATA_FRAME:
             save_beat_data_frame(train_beat_data_frame,
-                                 ["train", train_sample.sample_name],
+                                 ["train_sample", train_sample.sample_name],
                                  train_sample.sample_name,
                                  log=LOG)
 
@@ -139,35 +137,36 @@ else:
                               BEAT_STATE_EXTRACTOR_NAME, log=LOG)
 
 for sample in samples:
-    sample_wave_feature = extract_wave_feature(sample, log=LOG)
-    sample_stft_feature = extract_stft_feature(sample, log=LOG)
-    beat_data_frame = extract_beat_data_frame(sample_stft_feature,
-                                              wing_length=WING_LENGTH,
-                                              log=LOG)
-    beat_states = beat_state_extractor.extract_beat_states(sample,
-                                                           beat_data_frame,
-                                                           log=LOG)
-    beat = extract_beats(sample, beat_states, log=LOG)
-    print(len(beat), [str(_) for _ in beat])
+    wave_feature = extract_wave_feature(sample, log=LOG)
+    stft_feature = extract_stft_feature(sample, log=LOG)
+    beat_data_frame = extract_beat_data_frame(stft_feature, wing_length=WING_LENGTH, log=LOG)
+    beat_states = beat_state_extractor.extract_beat_states(sample, beat_data_frame, log=LOG)
+    beats = extract_beats(sample, beat_states, log=LOG)
+    print(len(beats), [str(beat) for beat in beats])
+    beat_frequencies = extract_beat_frequencies(sample, stft_feature, beats)
+    print(len(beat_frequencies), beat_frequencies)
+    beat_pitches = extract_beat_pitches(sample, stft_feature, beats)
+    print(len(beat_pitches), beat_pitches)
+    save_sheet(extract_sheet(sample, beats, beat_pitches),
+               ["sample", sample.sample_name],
+               sample.sample_name, log=LOG)
 
     if SAVE_WAVE_FEATURE_PLOT:
         save_wave_feature_plot(sample,
-                               sample_wave_feature,
-                               [sample.sample_name],
-                               sample.sample_name,
-                               log=LOG)
+                               wave_feature,
+                               ["sample", sample.sample_name],
+                               sample.sample_name, log=LOG)
 
     if SAVE_STFT_FEATURE_PLOT:
         save_stft_feature_plot(sample,
-                               sample_stft_feature,
-                               [sample.sample_name],
+                               stft_feature,
+                               ["sample", sample.sample_name],
                                sample.sample_name,
-                               beats=beat,
+                               beats=beats,
                                beat_states=beat_states,
                                log=LOG)
 
     if SAVE_BEAT_DATA_FRAME:
         save_beat_data_frame(beat_data_frame,
-                             [sample.sample_name],
-                             sample.sample_name,
-                             log=LOG)
+                             ["sample", sample.sample_name],
+                             sample.sample_name, log=LOG)

@@ -101,54 +101,50 @@ def extract_beats(sample: Sample,
                   beat_states: list[BeatState],
                   log: bool = False) -> list[Beat]:
     if log:
-        print("Extracting " + sample.sample_name + " beat type")
+        print("Extracting " + sample.sample_name + " beats")
 
     error_range = 1 / sample.beat_per_second / 2 / 5
 
     beats = []
 
     last_beat_state = BeatState.NONE
-    last_beat_start_index = 0
-    last_beat_none_index = 0
+    last_start_index = 0
+    last_none_index = 0
 
     for index, state in enumerate(beat_states):
+        duration = ((index - (last_none_index if last_beat_state is BeatState.NONE else last_start_index)) /
+                    len(beat_states) * sample.duration)
+        beat_type, beat_type_duration = extract_beat_type(duration, sample)
         if state is BeatState.START:
             if last_beat_state is BeatState.MIDDLE:
-                duration = (index - last_beat_start_index) / len(beat_states) * sample.duration
-                beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range:
-                    beats.append(Beat(beat_type, last_beat_start_index, index, True))
+                    beats.append(Beat(beat_type, last_start_index, index, True))
                     last_beat_state = state
-                    last_beat_start_index = index
+                    last_start_index = index
             if last_beat_state is BeatState.NONE:
-                duration = (index - last_beat_none_index) / len(beat_states) * sample.duration
-                beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range * 2:
-                    beats.append(Beat(beat_type, last_beat_none_index, index, False))
+                    beats.append(Beat(beat_type, last_none_index, index, False))
                 last_beat_state = state
-                last_beat_start_index = index
+                last_start_index = index
         if state is BeatState.NONE:
             if last_beat_state is BeatState.MIDDLE:
-                duration = (index - last_beat_start_index) / len(beat_states) * sample.duration
-                beat_type, beat_type_duration = extract_beat_type(duration, sample)
                 if abs(beat_type_duration - duration) < error_range * 2:
-                    beats.append(Beat(beat_type, last_beat_start_index, index, True))
+                    beats.append(Beat(beat_type, last_start_index, index, True))
                     last_beat_state = state
-                    last_beat_none_index = index
+                    last_none_index = index
         if state is BeatState.MIDDLE:
             if last_beat_state is not BeatState.NONE:
                 last_beat_state = state
 
+    duration = ((len(beat_states) - last_none_index if last_beat_state is BeatState.NONE else last_start_index) /
+                len(beat_states) * sample.duration)
+    beat_type, beat_type_duration = extract_beat_type(duration, sample)
     if last_beat_state is BeatState.MIDDLE:
-        duration = (len(beat_states) - last_beat_start_index) / len(beat_states) * sample.duration
-        beat_type, beat_type_duration = extract_beat_type(duration, sample)
         if abs(beat_type_duration - duration) < error_range:
-            beats.append(Beat(beat_type, last_beat_start_index, len(beat_states), True))
+            beats.append(Beat(beat_type, last_start_index, len(beat_states), True))
     if last_beat_state is BeatState.NONE:
-        duration = (len(beat_states) - last_beat_none_index) / len(beat_states) * sample.duration
-        beat_type, beat_type_duration = extract_beat_type(duration, sample)
         if abs(beat_type_duration - duration) < error_range * 2:
-            beats.append(Beat(beat_type, last_beat_none_index, len(beat_states), False))
+            beats.append(Beat(beat_type, last_none_index, len(beat_states), False))
 
     return beats
 
