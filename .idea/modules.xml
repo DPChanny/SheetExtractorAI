@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/SheetExtractor.iml" filepath="$PROJECT_DIR$/.idea/SheetExtractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/SheetExtractorAI.iml" filepath="$PROJECT_DIR$/.idea/SheetExtractorAI.iml" />
     </modules>
   </component>
 </project>
