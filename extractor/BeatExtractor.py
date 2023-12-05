@@ -1,9 +1,12 @@
 from os import makedirs
 from os.path import join
 
+import keras
 from keras import Sequential
 from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
+from keras.src.losses import categorical_crossentropy
+from keras.src.optimizers import Adam
 from keras.utils import to_categorical
 from matplotlib.axes import Axes
 from matplotlib.pyplot import figure
@@ -158,11 +161,13 @@ class BeatStateExtractor:
         self.model.add(Dense(units=self.wing_length * 2 + 1))
         self.model.add(Dense(units=3))
         self.model.add(Softmax())
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         self.model.build([self.wing_length * 2 + 1, 1, 1])
 
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit([BeatState.START.value, BeatState.MIDDLE.value, BeatState.NONE.value])
+
+    def compile(self):
+        self.model.compile(optimizer=Adam(), loss=categorical_crossentropy, metrics=['accuracy'])
 
     def save(self, directory: list[str], beat_state_extractor_name: str, log: bool = False):
         directory = join(*directory)

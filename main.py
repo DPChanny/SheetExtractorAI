@@ -117,6 +117,7 @@ if TRAIN_BEAT_STATE_EXTRACTOR:
         total_train_beat_data_frame = concat([total_train_beat_data_frame, train_beat_data_frame])
         total_train_beat_states += train_beat_states
 
+    beat_state_extractor.compile()
     beat_state_extractor_history = beat_state_extractor.fit(total_train_beat_data_frame,
                                                             total_train_beat_states,
                                                             epochs=EPOCHS,
@@ -135,6 +136,7 @@ if TRAIN_BEAT_STATE_EXTRACTOR:
 else:
     beat_state_extractor.load(["beat_state_extractor", BEAT_STATE_EXTRACTOR_NAME],
                               BEAT_STATE_EXTRACTOR_NAME, log=LOG)
+    beat_state_extractor.compile()
 
 for sample in samples:
     wave_feature = extract_wave_feature(sample, log=LOG)
@@ -143,11 +145,12 @@ for sample in samples:
     beat_states = beat_state_extractor.extract_beat_states(sample, beat_data_frame, log=LOG)
     beats = extract_beats(sample, beat_states, log=LOG)
     print(len(beats), [str(beat) for beat in beats])
-    beat_frequencies = extract_beat_frequencies(sample, stft_feature, beats)
+    beat_frequencies = extract_beat_frequencies(sample, stft_feature, beats, log=LOG)
     print(len(beat_frequencies), beat_frequencies)
-    beat_pitches = extract_beat_pitches(sample, stft_feature, beats)
+    beat_pitches = extract_beat_pitches(sample, beat_frequencies, log=LOG)
     print(len(beat_pitches), beat_pitches)
-    save_sheet(extract_sheet(sample, beats, beat_pitches),
+    sheet = extract_sheet(sample, beats, beat_pitches, log=LOG)
+    save_sheet(sheet,
                ["sample", sample.sample_name],
                sample.sample_name, log=LOG)
 

@@ -10,7 +10,9 @@ import Sample
 from Public import Beat, RESULT
 
 
-def extract_sheet(sample: Sample, beats: list[Beat], beat_pitches: list[str]) -> Stream:
+def extract_sheet(sample: Sample, beats: list[Beat], beat_pitches: list[str], log: bool = False) -> Stream:
+    if log:
+        print("Extracting " + sample.sample_name + " sheet")
     file_stream = Stream()
     file_metadata = Metadata()
     file_metadata.title = sample.sample_name

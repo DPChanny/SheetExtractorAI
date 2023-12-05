@@ -9,7 +9,12 @@ pitch_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 pitch_octave_names = []
 
 
-def extract_beat_frequencies(sample: Sample, stft_feature: STFTFeature, beats: list[Beat]) -> list[float]:
+def extract_beat_frequencies(sample: Sample,
+                             stft_feature: STFTFeature,
+                             beats: list[Beat],
+                             log: bool = False) -> list[float]:
+    if log:
+        print("Extracting " + sample.sample_name + " beat frequencies")
     beat_frequencies = []
     for index, beat in enumerate(beats):
         frequencies = array([sum(frequencies[beat.start:beat.end]) for frequencies in stft_feature.magnitudes_db])
@@ -30,10 +35,12 @@ def frequency_to_pitch(frequency, max_octave: int = 8):
 
 
 def extract_beat_pitches(sample: Sample,
-                         stft_feature: STFTFeature,
-                         beats: list[Beat],
-                         max_octave: int = 8) -> list[str]:
+                         frequencies: list[float],
+                         max_octave: int = 8,
+                         log: bool = False) -> list[str]:
+    if log:
+        print("Extracting " + sample.sample_name + " beat pitches")
     beat_pitches = []
-    for frequency in extract_beat_frequencies(sample, stft_feature, beats):
+    for frequency in frequencies:
         beat_pitches.append(frequency_to_pitch(frequency, max_octave))
     return beat_pitches
