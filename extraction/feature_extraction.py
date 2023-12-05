@@ -8,10 +8,11 @@ from numpy import array, clip, ndarray
 from scipy.signal import find_peaks
 
 from extraction.beat_extraction import plot_beats, plot_beat_states
-from public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT, Sample
+from public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT
 
 if TYPE_CHECKING:
     from extraction.beat_extraction import BeatState, Beat
+    from public import Sample
 
 
 class STFTFeature:
@@ -30,7 +31,7 @@ class WaveFeature:
         self.amplitudes_peaks = amplitudes_peaks
 
 
-def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
+def extract_wave_feature(sample: "Sample", log: bool = False) -> WaveFeature:
     if log:
         print("Extracting " + sample.sample_name + " wave feature")
 
@@ -40,7 +41,7 @@ def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
     return WaveFeature(amplitudes, amplitudes_peaks)
 
 
-def save_wave_feature_plot(sample: Sample,
+def save_wave_feature_plot(sample: "Sample",
                            wave_feature: WaveFeature,
                            directory: list[str],
                            plot_name: str,
@@ -71,7 +72,7 @@ def save_wave_feature_plot(sample: Sample,
     save_plot(directory, plot_name + ".wf", fig, log=log)
 
 
-def extract_stft_feature(sample: Sample, log: bool = False) -> STFTFeature:
+def extract_stft_feature(sample: "Sample", log: bool = False) -> STFTFeature:
     if log:
         print("Extracting " + sample.sample_name + " stft feature")
 
@@ -99,7 +100,7 @@ def extract_stft_feature(sample: Sample, log: bool = False) -> STFTFeature:
                        array(magnitudes_sum))
 
 
-def save_stft_feature_plot(sample: Sample,
+def save_stft_feature_plot(sample: "Sample",
                            stft_feature: STFTFeature,
                            directory: list[str],
                            plot_name: str,

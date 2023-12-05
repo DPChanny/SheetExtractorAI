@@ -16,10 +16,11 @@ from pandas import DataFrame
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 
-from public import (FIG_HEIGHT, load_data_frame, save_data_frame, save_plot, Sample)
+from public import FIG_HEIGHT, load_data_frame, save_data_frame, save_plot
 
 if TYPE_CHECKING:
     from extraction.feature_extraction import STFTFeature
+    from public import Sample
 
 
 class BeatStateDataFrameColumn(Enum):
@@ -69,7 +70,7 @@ class Beat:
                 str((self.start, self.end)))
 
 
-def extract_beat_states(sample: Sample,
+def extract_beat_states(sample: "Sample",
                         stft_feature: "STFTFeature",
                         beat_state_data_frame: DataFrame,
                         log: bool = False) -> list[BeatState]:
@@ -133,7 +134,7 @@ def save_beat_data_frame(beat_data_frame: DataFrame, directory: list[str], data_
     save_data_frame(directory, data_frame_name + ".bdf", beat_data_frame, log=log)
 
 
-def extract_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]:
+def extract_beat_type(duration: float, sample: "Sample") -> tuple[BeatType, float]:
     min_error_beat_type = BeatType.WHOLE
     min_error_beat_type_duration = 1 / sample.beat_per_second * 4
     for beat_type, beat_type_duration in [(BeatType.WHOLE, 1 / sample.beat_per_second * 4),
@@ -147,7 +148,7 @@ def extract_beat_type(duration: float, sample: Sample) -> tuple[BeatType, float]
     return min_error_beat_type, min_error_beat_type_duration
 
 
-def extract_beats(sample: Sample,
+def extract_beats(sample: "Sample",
                   beat_states: list[BeatState],
                   log: bool = False) -> list[Beat]:
     if log:
@@ -289,7 +290,7 @@ class BeatStateExtractor:
 
         return history
 
-    def extract_beat_states(self, sample: Sample, beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
+    def extract_beat_states(self, sample: "Sample", beat_data_frame: DataFrame, log: bool = False) -> list[BeatState]:
         if log:
             print("Extracting " + sample.sample_name + " beat state")
         beat_data = beat_data_frame.values.reshape(beat_data_frame.values.shape[0],
