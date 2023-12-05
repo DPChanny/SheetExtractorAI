@@ -245,6 +245,8 @@ class BeatStateExtractor:
         val_accuracy = []
         loss = []
         val_loss = []
+        best_epochs = []
+        stopped_epochs = []
 
         for index, (train, val) in enumerate(StratifiedKFold(n_splits=n_splits,
                                                              shuffle=True).split(beat_data,
@@ -263,6 +265,12 @@ class BeatStateExtractor:
             train_beat_state = to_categorical(self.label_encoder.transform(train_beat_state))
             val_beat_state = to_categorical(self.label_encoder.transform(val_beat_state))
 
+            early_stopping = EarlyStopping(monitor="val_loss",
+                                           patience=patience,
+                                           mode="min",
+                                           restore_best_weights=True,
+                                           verbose=1 if log else 0)
+
             history = self.model.fit(train_beat_data,
                                      train_beat_state,
                                      validation_data=(val_beat_data,
@@ -270,12 +278,10 @@ class BeatStateExtractor:
                                      epochs=epochs,
                                      batch_size=batch_size,
                                      verbose=2 if log else 0,
-                                     callbacks=[EarlyStopping(monitor="val_loss",
-                                                              patience=patience,
-                                                              mode="min",
-                                                              restore_best_weights=True,
-                                                              verbose=1 if log else 0)])
+                                     callbacks=[early_stopping])
 
+            best_epochs.append(early_stopping.best_epoch + len(accuracy))
+            stopped_epochs.append(early_stopping.stopped_epoch + len(accuracy))
             accuracy += history.history['accuracy']
             val_accuracy += history.history['val_accuracy']
             loss += history.history['loss']
@@ -285,7 +291,9 @@ class BeatStateExtractor:
             "accuracy": accuracy,
             "val_accuracy": val_accuracy,
             "loss": loss,
-            "val_loss": val_loss
+            "val_loss": val_loss,
+            "best_epochs": best_epochs,
+            "stopped_epochs": stopped_epochs
         }
 
         return history
@@ -313,8 +321,18 @@ def save_beat_state_extractor_history_plot(beat_state_extractor_history: dict,
 
     history_ax = fig.add_subplot(111)
 
-    for key in beat_state_extractor_history.keys():
+    for key in ["accuracy", "val_accuracy", "loss", "val_loss"]:
         history_ax.plot(beat_state_extractor_history[key], label=key, linewidth=0.5)
+    for best_epoch in beat_state_extractor_history["best_epochs"]:
+        history_ax.axvline(best_epoch,
+                           color="green",
+                           linestyle="dashdot",
+                           linewidth=0.75)
+    for stopped_epoch in beat_state_extractor_history["stopped_epochs"]:
+        history_ax.axvline(stopped_epoch,
+                           color="red",
+                           linestyle="dotted",
+                           linewidth=0.25)
 
     history_ax.set_xlabel("Epochs")
 
@@ -328,7 +346,7 @@ def plot_beats(ax: Axes, beats: list[Beat]):
         ax.axvline(beat.start,
                    color="green" if beat.note else "red",
                    linestyle="dashdot",
-                   linewidth=0.5)
+                   linewidth=0.75)
         ax.axvline(beat.end,
                    color="green" if beat.note else "red",
                    linestyle="dotted",
