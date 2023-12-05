@@ -1,13 +1,33 @@
+from typing import TYPE_CHECKING
+
 from librosa import amplitude_to_db, stft
 from librosa.display import specshow
 from librosa.feature import melspectrogram
 from matplotlib.pyplot import figure
-from numpy import array, clip
+from numpy import array, clip, ndarray
 from scipy.signal import find_peaks
 
-from Public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT, WaveFeature, STFTFeature, BeatState
-from Sample import Sample
-from extractor.BeatExtractor import plot_beats, Beat, plot_beat_states
+from extraction.beat_extraction import plot_beats, plot_beat_states
+from public import save_plot, set_tick, FIG_WIDTH_MULTIPLIER, FIG_HEIGHT, Sample
+
+if TYPE_CHECKING:
+    from extraction.beat_extraction import BeatState, Beat
+
+
+class STFTFeature:
+    def __init__(self,
+                 magnitudes_db: ndarray,
+                 magnitudes_mel_db: ndarray,
+                 magnitudes_sum: ndarray):
+        self.magnitudes_db = magnitudes_db
+        self.magnitudes_mel_db = magnitudes_mel_db
+        self.magnitudes_sum = magnitudes_sum
+
+
+class WaveFeature:
+    def __init__(self, amplitudes, amplitudes_peaks):
+        self.amplitudes = amplitudes
+        self.amplitudes_peaks = amplitudes_peaks
 
 
 def extract_wave_feature(sample: Sample, log: bool = False) -> WaveFeature:
@@ -83,8 +103,8 @@ def save_stft_feature_plot(sample: Sample,
                            stft_feature: STFTFeature,
                            directory: list[str],
                            plot_name: str,
-                           beats: list[Beat] = None,
-                           beat_states: list[BeatState] = None,
+                           beats: list["Beat"] = None,
+                           beat_states: list["BeatState"] = None,
                            log: bool = False):
     fig = figure(figsize=(sample.duration * sample.beat_per_second * FIG_WIDTH_MULTIPLIER, FIG_HEIGHT * 3))
     fig.suptitle(sample.sample_name + " STFT Feature")

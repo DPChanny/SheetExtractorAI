@@ -1,7 +1,8 @@
+from enum import Enum
 from os import makedirs
 from os.path import join
+from typing import TYPE_CHECKING
 
-import keras
 from keras import Sequential
 from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense, Softmax, Bidirectional
@@ -15,15 +16,61 @@ from pandas import DataFrame
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 
-from Public import (RESULT, SOURCE, FIG_HEIGHT, BeatType, Beat, BeatState, STFTFeature,
-                    BeatStateDataFrameColumn,
-                    BeatDataFrameColumn, BeatStateColor,
-                    load_data_frame, save_data_frame, save_plot)
-from Sample import Sample
+from public import (FIG_HEIGHT, load_data_frame, save_data_frame, save_plot, Sample)
+
+if TYPE_CHECKING:
+    from extraction.feature_extraction import STFTFeature
+
+
+class BeatStateDataFrameColumn(Enum):
+    START = "start"
+    END = "end"
+    BEAT_STATE = "beat_state"
+
+
+class BeatDataFrameColumn(Enum):
+    START = "start"
+    END = "end"
+    LEFT_DIFFERENCE = "left_difference_"
+    RIGHT_DIFFERENCE = "right_difference_"
+    VALUE = "value"
+
+
+class BeatState(Enum):
+    START = "start"
+    MIDDLE = "middle"
+    NONE = "none"
+
+
+BeatStateColor = {
+    BeatState.START: "green",
+    BeatState.MIDDLE: "blue",
+    BeatState.NONE: "red"
+}
+
+
+class BeatType(Enum):
+    WHOLE = "whole"
+    HALF = "half"
+    QUARTER = "quarter"
+    EIGHTH = "eighth"
+
+
+class Beat:
+    def __init__(self, beat_type: BeatType, start: int, end: int, note: bool):
+        self.beat_type = beat_type
+        self.start = start
+        self.end = end
+        self.note = note
+
+    def __str__(self):
+        return (self.beat_type.value +
+                ("_note" if self.note else "_rest") +
+                str((self.start, self.end)))
 
 
 def extract_beat_states(sample: Sample,
-                        stft_feature: STFTFeature,
+                        stft_feature: "STFTFeature",
                         beat_state_data_frame: DataFrame,
                         log: bool = False) -> list[BeatState]:
     if log:
@@ -42,12 +89,12 @@ def load_beat_state_data_frame(directory: list[str], data_frame_name: str, log: 
     return load_data_frame(directory, data_frame_name + ".bsdf", log=log)
 
 
-def plot_beat_states(ax: Axes, beat_states: list[BeatState], stft_feature: STFTFeature):
+def plot_beat_states(ax: Axes, beat_states: list[BeatState], stft_feature: "STFTFeature"):
     for index, value in enumerate(stft_feature.magnitudes_sum):
         ax.scatter(index, value, s=1.5, edgecolors="none", c=BeatStateColor[beat_states[index]])
 
 
-def extract_beat_data_frame(stft_feature: STFTFeature, wing_length: int = 5, log: bool = False) -> DataFrame:
+def extract_beat_data_frame(stft_feature: "STFTFeature", wing_length: int = 5, log: bool = False) -> DataFrame:
     if log:
         print("Extracting beat data frame")
 
@@ -172,15 +219,15 @@ class BeatStateExtractor:
     def save(self, directory: list[str], beat_state_extractor_name: str, log: bool = False):
         directory = join(*directory)
         if log:
-            print("Saving " + join(*[RESULT, directory, beat_state_extractor_name + ".bse.weights.h5"]))
-        makedirs(join(*[RESULT, directory]), exist_ok=True)
-        self.model.save_weights(join(*[RESULT, directory, beat_state_extractor_name + ".bse.weights.h5"]))
+            print("Saving " + join(*[directory, beat_state_extractor_name + ".bse.weights.h5"]))
+        makedirs(directory, exist_ok=True)
+        self.model.save_weights(join(*[directory, beat_state_extractor_name + ".bse.weights.h5"]))
 
     def load(self, directory: list[str], beat_state_extractor_name: str, log: bool = False):
         directory = join(*directory)
         if log:
-            print("Loading " + join(*[SOURCE, directory, beat_state_extractor_name + ".bse.weights.h5"]))
-        self.model.load_weights(join(*[SOURCE, directory, beat_state_extractor_name + ".bse.weights.h5"]))
+            print("Loading " + join(*[directory, beat_state_extractor_name + ".bse.weights.h5"]))
+        self.model.load_weights(join(*[directory, beat_state_extractor_name + ".bse.weights.h5"]))
 
     def fit(self,
             beat_data_frame: DataFrame,
