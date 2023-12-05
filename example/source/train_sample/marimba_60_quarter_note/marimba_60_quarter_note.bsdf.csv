@@ -1,0 +1,17 @@
+start,end,beat_state
+0,8,start
+8,64,middle
+64,73,start
+73,128,middle
+128,135,start
+135,192,middle
+192,200,start
+200,256,middle
+256,264,start
+264,320,middle
+320,325,start
+325,384,middle
+384,389,start
+389,448,middle
+448,453,start
+453,512,middle
